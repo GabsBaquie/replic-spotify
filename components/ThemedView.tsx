@@ -1,14 +1,35 @@
 import { View, type ViewProps } from 'react-native';
+import { createBox, useTheme, ResponsiveValue } from '@shopify/restyle';
+import { Theme } from '@/theme/theme';
 
-import { useThemeColor } from '@/hooks/useThemeColor';
+const Box = createBox<Theme>();
 
-export type ThemedViewProps = ViewProps & {
-  lightColor?: string;
-  darkColor?: string;
+export type ThemedViewProps = Omit<ViewProps, 'style'> & {
+  backgroundColor?: keyof Theme['colors'];
+  padding?: ResponsiveValue<keyof Theme['spacing'], Theme['breakpoints']>;
+  margin?: ResponsiveValue<keyof Theme['spacing'], Theme['breakpoints']>;
+  borderRadius?: number;
+  style?: ViewProps['style'];
 };
 
-export function ThemedView({ style, lightColor, darkColor, ...otherProps }: ThemedViewProps) {
-  const backgroundColor = useThemeColor({ dark: darkColor }, 'background');
+export function ThemedView({
+  style,
+  backgroundColor = 'mainBackground',
+  padding,
+  margin,
+  borderRadius,
+  ...otherProps
+}: ThemedViewProps) {
+  const theme = useTheme<Theme>();
 
-  return <View style={[{ backgroundColor }, style]} {...otherProps} />;
+  return (
+    <Box
+      backgroundColor={backgroundColor}
+      padding={padding}
+      margin={margin}
+      borderRadius={borderRadius}
+      style={style}
+      {...otherProps}
+    />
+  );
 }

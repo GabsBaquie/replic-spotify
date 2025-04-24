@@ -1,5 +1,4 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
+import { Image, StyleSheet } from 'react-native';
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -9,13 +8,19 @@ export default function HomeScreen() {
   return (
     <ParallaxScrollView
       headerImage={
-        <Image
-          source={require('@/assets/images/image.png')}
-          style={styles.reactLogo}
-        />
+          <Image
+            source={require('@/assets/images/spotify-cover.png')}
+            style={styles.reactLogo}
+          />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
+        <ThemedText 
+          color="textPrimary"
+          variant="title"
+          style={styles.stepContainer}
+        >
+          Welcome!
+        </ThemedText>
         <HelloWave />
       </ThemedView>
     </ParallaxScrollView>
@@ -33,8 +38,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reactLogo: {
-    height: 450,
+    height: 400,
     width: '100%',
-    resizeMode: 'cover',
   },
 });
