@@ -36,6 +36,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "f5afc72f-92d1-47ac-86cd-25b02da81211"
+      }
+    },
+    "owner": "replic-spotify"
   }
 }
