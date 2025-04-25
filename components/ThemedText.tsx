@@ -4,7 +4,7 @@ import type { Theme } from '@/theme/theme';
 const RestyleText = createText<Theme>();
 
 type ThemedTextProps = React.ComponentProps<typeof RestyleText> & {
-  variant?: keyof Theme['textVariants'];
+  variant?: 'header' | 'title' | 'body' | 'defaults' | 'link' | 'defaultSemiBold';
   style?: any;
 };
 
@@ -18,7 +18,12 @@ export function ThemedText({
     <RestyleText 
       variant={variant}
       color={color}
-      style={style}
+      style={[
+        {
+          fontFamily: 'System',
+        },
+        style,
+      ]}
       {...rest}
     />
   );

@@ -1,27 +1,56 @@
-import { Image, StyleSheet } from 'react-native';
-import { HelloWave } from '@/components/HelloWave';
+import { Image, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { red } from 'react-native-reanimated/lib/typescript/Colors';
+import { Redirect } from 'expo-router';
 
 export default function HomeScreen() {
+  const isoboarding = true;
+
+  if (isoboarding) {
+    return <Redirect href="/onBoarding" />;
+  }
+  
   return (
     <ParallaxScrollView
       headerImage={
+        <View style={styles.headerContainer}>
           <Image
             source={require('@/assets/images/spotify-cover.png')}
             style={styles.reactLogo}
           />
+          <LinearGradient
+            colors={['transparent', '#121212', '#121212']}
+            style={styles.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1.82 }}
+          />
+        </View>
       }>
+        
       <ThemedView style={styles.titleContainer}>
+      <Image
+                  source={require('@/assets/images/spotify-logo-ligth.png')}
+                  style={styles.iconLogo}
+                  resizeMode="contain"
+                />
+
         <ThemedText 
           color="textPrimary"
           variant="title"
           style={styles.stepContainer}
         >
-          Welcome!
+          Millions of Songs. 
         </ThemedText>
-        <HelloWave />
+         <ThemedText 
+          color="textPrimary"
+          variant="title"
+          style={styles.stepContainer}
+        >
+          Free on Spotify.
+        </ThemedText>
       </ThemedView>
     </ParallaxScrollView>
   );
@@ -29,16 +58,33 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   titleContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: 8,
+    gap: 15,
   },
   stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+  headerContainer: {
+    position: 'relative',
+    height: 350,
+    width: '100%',
   },
   reactLogo: {
-    height: 400,
+    height: '100%',
     width: '100%',
+    position: 'absolute',
+  },
+  gradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%',
+  },
+  iconLogo: {
+    height: 50,
+    width: 50,
   },
 });
