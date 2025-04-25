@@ -64,7 +64,7 @@ export default function Step3() {
             )}
             {hadName && (
                 <Box padding='s'>
-                    <RestyleButton title="Next" textColor="secondary" onPress={() => {router.push('/signup/step2')}} disabled={false}/>
+                    <RestyleButton title="Next" textColor="secondary" onPress={() => {router.push('/')}} disabled={false}/>
                 </Box>
             )}
         </Box>
