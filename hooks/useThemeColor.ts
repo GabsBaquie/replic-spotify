@@ -2,17 +2,13 @@
  * Hook personnalisé pour obtenir les couleurs du thème sombre
  */
 
-import { Colors } from '@/constants/Colors';
+import { useTheme } from '@shopify/restyle';
+import { Theme } from '@/theme/theme';
 
 export function useThemeColor(
-  props: { dark?: string },
-  colorName: keyof typeof Colors
+  props: { light?: string; dark?: string },
+  colorName: keyof Theme['colors']
 ) {
-  const colorFromProps = props.dark;
-
-  if (colorFromProps) {
-    return colorFromProps;
-  }
-  
-  return Colors[colorName];
+  const theme = useTheme<Theme>();
+  return theme.colors[colorName];
 }
