@@ -1,5 +1,6 @@
 import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { Box, Text } from '@/components/restyle';
 import { CustomIcon } from '@/components/ui/CustomIcon';
@@ -64,21 +65,21 @@ export default function Onboarding() {
           <RestyleButton 
                   title="Continue with Google"
                   variant="outline"
-                  icon={<CustomIcon source={require('@/assets/images/google.png')} size={20} />}
+                  icon={<CustomIcon source={require('@/assets/images/icons/google.png')} size={20} />}
                   onPress={() => {}}
                 />
 
           <RestyleButton 
                   title="Continue with Facebook"
                   variant="outline"
-                  icon={<CustomIcon source={require('@/assets/images/facebook.png')} size={20} />}
+                  icon={<CustomIcon source={require('@/assets/images/icons/facebook.png')} size={20} />}
                   onPress={() => {}}
                 />
 
           <RestyleButton 
                   title="Continue with Apple"
                   variant="outline"
-                  icon={<CustomIcon source={require('@/assets/images/apple.png')} size={20} />}
+                  icon={<CustomIcon source={require('@/assets/images/icons/apple.png')} size={20} />}
                   onPress={() => {}}
                 />
 
