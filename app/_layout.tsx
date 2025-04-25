@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { Box } from '@/components/restyle';
 
 import theme from '@/theme/theme';
 
@@ -28,8 +29,8 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }} />
+        <StatusBar style="light" />     
     </ThemeProvider>
   );
 }

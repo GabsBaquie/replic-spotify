@@ -1,10 +1,8 @@
 import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { red } from 'react-native-reanimated/lib/typescript/Colors';
 import { Redirect } from 'expo-router';
+import { Box, Text } from '@/components/restyle';
 
 export default function HomeScreen() {
   const isoboarding = true;
@@ -30,28 +28,28 @@ export default function HomeScreen() {
         </View>
       }>
         
-      <ThemedView style={styles.titleContainer}>
+      <Box style={styles.titleContainer}>
       <Image
                   source={require('@/assets/images/spotify-logo-ligth.png')}
                   style={styles.iconLogo}
                   resizeMode="contain"
                 />
 
-        <ThemedText 
-          color="textPrimary"
+        <Text 
+          color="text"
           variant="title"
           style={styles.stepContainer}
         >
           Millions of Songs. 
-        </ThemedText>
-         <ThemedText 
-          color="textPrimary"
+        </Text>
+         <Text 
+          color="text"
           variant="title"
           style={styles.stepContainer}
         >
           Free on Spotify.
-        </ThemedText>
-      </ThemedView>
+        </Text>
+      </Box>
     </ParallaxScrollView>
   );
 }

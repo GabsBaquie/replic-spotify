@@ -1,8 +1,7 @@
 import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { Box, Text } from '@/components/restyle';
 
 export default function Onboarding() {
   return (
@@ -23,53 +22,42 @@ export default function Onboarding() {
           </View>
         }>
 
-    <ThemedView style={styles.titleContainer}>
+        <Box 
+          backgroundColor="mainBackground"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          flex={1}
+          gap="m"
+        >
           <Image
-                      source={require('@/assets/images/spotify-logo-ligth.png')}
-                      style={styles.iconLogo}
-                      resizeMode="contain"
-                    />
-
-            <ThemedText 
-              color="textPrimary"
-              variant="title"
-              style={styles.stepContainer}
-            >
-              Millions of Songs. 
-            </ThemedText>
-            <ThemedText 
-              color="textPrimary"
-              variant="title"
-              style={styles.stepContainer}
-            >
-              Free on Spotify.
-            </ThemedText>
-          </ThemedView>
+            source={require('@/assets/images/spotify-logo-ligth.png')}
+            style={styles.iconLogo}
+            resizeMode="contain"
+          />
+          <Text 
+            color="text"
+            variant="title"
+            textAlign="center"
+          >
+            Millions of Songs. 
+          </Text>
+          <Text 
+            color="text"
+            variant="title"
+            textAlign="center"
+          >
+            Free on Spotify.
+          </Text>
+        </Box>
       </ParallaxScrollView>
-
-</>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 15,
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  stepContainer: {
-    alignItems: 'center',
-    textAlign: 'center',
-  },
   headerContainer: {
-    height: 450,
+    height: 400,
     width: '100%',
   },
   reactLogo: {
