@@ -1,7 +1,7 @@
 import {createTheme} from '@shopify/restyle';
 
 const palette = {
-  primary: '#1ED760',
+  primary: '#1ED760', // Vert Spotify
   secondary: '#F6F6F7',
   accent: '#5C6AC4',
   success: '#008060',
@@ -33,9 +33,9 @@ const theme = createTheme({
     text: palette.text,
     textSecondary: palette.textSecondary,
     transparent: palette.transparent,
-    tabBarActive: palette.foreground,
-    tabBarInactive: palette.textSecondary,
-    tabBarBackground: palette.surface,
+    tabBarActive: palette.primary,     
+    tabBarInactive: palette.foreground, 
+    tabBarBackground: palette.background,
   },
   spacing: {
     xs: 8,
