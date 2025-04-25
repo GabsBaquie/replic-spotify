@@ -1,11 +1,14 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { StyleSheet, TextInput } from "react-native";
 import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from "@/components/RestyleButton";
 import { router } from "expo-router";
+import { RadioButton } from "react-native-paper";
 
 export default function Step3() {
-    const [hadEmail, setHadEmail] = useState(false);
+    const [hadName, sethadName] = useState(false);
+    const [checked, setChecked] = useState(false);
+    const [checked2, setChecked2] = useState(false);
 
     return (
         <Box backgroundColor="mainBackground" style={styles.container}>
@@ -21,19 +24,45 @@ export default function Step3() {
                     placeholderTextColor="#000"
                     keyboardType="default"
                     autoFocus={true}
-                    onChangeText={() => {setHadEmail(true)}}
+                    onChangeText={() => {sethadName(true)}}
                     autoCapitalize="characters"
                 />
                 <Text style={styles.input_container_subtext}>This appears on your spotify profile</Text>
                 
             </Box>
             <Box padding='s'style={styles.divider}/>
-            {!hadEmail && (
+            <Box style={styles.text_container}>
+                <Text variant='caption' style={styles.text} color='text'>By tapping on "Create account", you agree to the spotify Terms of Use.</Text>
+                <Text variant='caption' style={styles.text} color='success'>Terms of Use</Text>
+                <Text variant='caption' style={styles.text} color='text'>To learn more about how Spotify collect, uses, shares and protect your personal data, Please see the Spotify Privacy Policy.</Text>
+                <Text variant='caption' style={styles.text} color='success'>Privacy Policy</Text>
+                <Box style={styles.text_with_button}>
+                    <Text variant='caption' style={styles.text} color='text'>Please send me news and offers from Spotify.</Text>
+                    <RadioButton
+                        value="first"
+                        status='checked'
+                        onPress={() => {setChecked2(!checked2)}}
+                        color={checked2 === false ? '#535353' : '#1ED760'}
+                        
+                    />
+                </Box>
+                <Box style={styles.text_with_button}>
+                    <Text variant='caption' style={styles.text} color='text'>Share my registration data with Spotify's content providers for marketing purposes.</Text>
+                    <RadioButton
+                        value="first"
+                        status='checked'
+                        onPress={() => {setChecked(!checked)}}
+                        color={checked === false ? '#535353' : '#1ED760'}
+                        
+                    />
+                </Box>
+            </Box>
+            {!hadName && (
                 <Box padding='s'>
                     <RestyleButton title="Next" variant="primary" textColor="text" onPress={() => {}} disabled={true}/>
                 </Box>
             )}
-            {hadEmail && (
+            {hadName && (
                 <Box padding='s'>
                     <RestyleButton title="Next" textColor="secondary" onPress={() => {router.push('/signup/step2')}} disabled={false}/>
                 </Box>
@@ -95,4 +124,16 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         width: '100%',
     },
+    text_container: {
+        gap: 10,
+    },
+    text: {
+        fontSize: 12,
+    },
+    text_with_button: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',  
+        alignItems: 'center',
+    }
 })
