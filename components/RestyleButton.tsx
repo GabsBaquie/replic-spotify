@@ -6,13 +6,14 @@ import { Box, Text } from '@/components/restyle';
 type ButtonVariants = VariantProps<Theme, 'buttonVariants'>;
 type ButtonSpacingProps = SpacingProps<Theme>;
 
-type AuthButtonProps = ButtonVariants &
+type RestyleButtonProps = ButtonVariants &
   ButtonSpacingProps & {
     title: string;
     onPress: () => void;
     icon?: React.ReactNode;
     disabled?: boolean;
     fullWidth?: boolean;
+    textColor?: keyof Theme['colors']; // Ajout de la prop textColor
   };
 
 const BaseButton = createRestyleComponent<ButtonVariants & ButtonSpacingProps & React.ComponentProps<typeof TouchableOpacity>, Theme>([
@@ -20,15 +21,16 @@ const BaseButton = createRestyleComponent<ButtonVariants & ButtonSpacingProps & 
   createVariant({ themeKey: 'buttonVariants' }),
 ], TouchableOpacity);
 
-export function AuthButton({
+export function RestyleButton({
   title,
   onPress,
   variant = 'primary',
   icon,
   disabled = false,
   fullWidth = false,
+  textColor,
   ...rest
-}: AuthButtonProps) {
+}: RestyleButtonProps) {
   return (
     <BaseButton
       variant={variant}
@@ -41,10 +43,13 @@ export function AuthButton({
       {...rest}>
       <Box flexDirection="row" alignItems="center" justifyContent="center">
         {icon && <Box marginRight="s">{icon}</Box>}
-        <Text variant="body" color={variant === 'outline' ? 'text' : 'mainForeground'}>
+        <Text 
+          variant="body" 
+          color={textColor || (variant === 'outline' ? 'text' : 'mainForeground')}
+        >
           {title}
         </Text>
       </Box>
     </BaseButton>
   );
-} 
+}

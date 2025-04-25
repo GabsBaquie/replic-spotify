@@ -2,10 +2,12 @@ import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { Box, Text } from '@/components/restyle';
+import { CustomIcon } from '@/components/ui/CustomIcon';
+import { RestyleButton } from '@/components/RestyleButton';
+
 
 export default function Onboarding() {
   return (
-    <>
       <ParallaxScrollView
         headerImage={
           <View style={styles.headerContainer}>
@@ -23,7 +25,6 @@ export default function Onboarding() {
         }>
 
         <Box 
-          backgroundColor="mainBackground"
           flexDirection="column"
           alignItems="center"
           justifyContent="center"
@@ -50,8 +51,44 @@ export default function Onboarding() {
             Free on Spotify.
           </Text>
         </Box>
+
+        <Box style={styles.boxAuyh}>
+        <RestyleButton 
+                  title="Sign up free"
+                  variant="primary"
+                  textColor="textSecondary"
+                  onPress={() => {}}
+                />
+
+          <RestyleButton 
+                  title="Continue with Google"
+                  variant="outline"
+                  icon={<CustomIcon source={require('@/assets/images/google.png')} size={20} />}
+                  onPress={() => {}}
+                />
+
+          <RestyleButton 
+                  title="Continue with Facebook"
+                  variant="outline"
+                  icon={<CustomIcon source={require('@/assets/images/facebook.png')} size={20} />}
+                  onPress={() => {}}
+                />
+
+          <RestyleButton 
+                  title="Continue with Apple"
+                  variant="outline"
+                  icon={<CustomIcon source={require('@/assets/images/apple.png')} size={20} />}
+                  onPress={() => {}}
+                />
+
+          <RestyleButton 
+                  title="Log in"
+                  variant="transparent"
+                  onPress={() => {}}
+                />
+        </Box>
+
       </ParallaxScrollView>
-    </>
   );
 }
 
@@ -76,4 +113,9 @@ const styles = StyleSheet.create({
     height: 50,
     width: 50,
   },
+  boxAuyh: {
+    gap: 10,
+    marginHorizontal: 50,
+    marginVertical: 20
+  }
 });

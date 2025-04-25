@@ -1,7 +1,7 @@
 import {createTheme} from '@shopify/restyle';
 
 const palette = {
-  primary: '#008060',
+  primary: '#1ED760',
   secondary: '#F6F6F7',
   accent: '#5C6AC4',
   success: '#008060',
@@ -13,7 +13,7 @@ const palette = {
   foreground: '#FFFFFF',
   border: '#44474A',
   text: '#FFFFFF',
-  textSecondary: '#8C9196',
+  textSecondary: '#00000',
   transparent: 'transparent',
 };
 
@@ -38,8 +38,8 @@ const theme = createTheme({
     tabBarBackground: palette.surface,
   },
   spacing: {
-    xs: 4,
-    s: 8,
+    xs: 8,
+    s: 12,
     m: 16,
     l: 24,
     xl: 32,
@@ -62,6 +62,7 @@ const theme = createTheme({
     defaults: {
       color: 'text',
       fontSize: 16,
+      fontWeight: 'bold',
     },
     header: {
       fontWeight: 'bold',
@@ -94,7 +95,7 @@ const theme = createTheme({
   },
   buttonVariants: {
     defaults: {
-      borderRadius: 's',
+      borderRadius: 'full',
       paddingVertical: 's',
       paddingHorizontal: 'm',
     },
@@ -112,6 +113,10 @@ const theme = createTheme({
       backgroundColor: 'transparent',
       borderWidth: 1,
       borderColor: 'border',
+      color: 'text',
+    },
+    transparent: {
+      backgroundColor: 'transparent',
       color: 'text',
     },
     critical: {
