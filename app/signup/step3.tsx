@@ -4,7 +4,7 @@ import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from "@/components/RestyleButton";
 import { router } from "expo-router";
 
-export default function Step1() {
+export default function Step3() {
     const [hadEmail, setHadEmail] = useState(false);
 
     return (
@@ -14,28 +14,30 @@ export default function Step1() {
             </Box>
 
             <Box style={styles.input_container}>
-                <Text variant='title'>What's your email?</Text>
+                <Text variant='title'>What's your name?</Text>
                 <TextInput
                     style={styles.input_container_input}
-                    placeholder="Your email"
+                    placeholder="Your name"
                     placeholderTextColor="#000"
-                    keyboardType="email-address"
+                    keyboardType="default"
                     autoFocus={true}
                     onChangeText={() => {setHadEmail(true)}}
-                    autoCapitalize="none"
+                    autoCapitalize="characters"
                 />
-                <Text style={styles.input_container_subtext}>You'll need to confirm this email later.</Text>
-                {!hadEmail && (
-                    <Box padding='s'>
-                        <RestyleButton title="Next" variant="primary" textColor="text" onPress={() => {}} disabled={true}/>
-                    </Box>
-                )}
-                {hadEmail && (
-                    <Box padding='s'>
-                        <RestyleButton title="Next" textColor="secondary" onPress={() => {router.push('/signup/step2')}} disabled={false}/>
-                    </Box>
-                )}
+                <Text style={styles.input_container_subtext}>This appears on your spotify profile</Text>
+                
             </Box>
+            <Box padding='s'style={styles.divider}/>
+            {!hadEmail && (
+                <Box padding='s'>
+                    <RestyleButton title="Next" variant="primary" textColor="text" onPress={() => {}} disabled={true}/>
+                </Box>
+            )}
+            {hadEmail && (
+                <Box padding='s'>
+                    <RestyleButton title="Next" textColor="secondary" onPress={() => {router.push('/signup/step2')}} disabled={false}/>
+                </Box>
+            )}
         </Box>
     )
 }
@@ -55,7 +57,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     input_container: {
-        paddingVertical: '10%'
+        marginTop: '10%'
     },
     input_container_input: {
         height: 40,
@@ -86,5 +88,11 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         color: '#000',
         borderRadius: 30,
-    }
+    },
+    divider: {
+        borderBottomColor: '#777777',
+        borderBottomWidth: 1,
+        marginBottom: 10,
+        width: '100%',
+    },
 })

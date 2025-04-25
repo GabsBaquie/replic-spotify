@@ -4,8 +4,8 @@ import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from "@/components/RestyleButton";
 import { router } from "expo-router";
 
-export default function Step1() {
-    const [hadEmail, setHadEmail] = useState(false);
+export default function Step2() {
+    const [hadPassword, setHadPassword] = useState(false);
 
     return (
         <Box backgroundColor="mainBackground" style={styles.container}>
@@ -14,25 +14,27 @@ export default function Step1() {
             </Box>
 
             <Box style={styles.input_container}>
-                <Text variant='title'>What's your email?</Text>
+                <Text variant='title'>Create a password</Text>
                 <TextInput
                     style={styles.input_container_input}
-                    placeholder="Your email"
+                    placeholder="Your password"
                     placeholderTextColor="#000"
-                    keyboardType="email-address"
+                    keyboardType="default"
                     autoFocus={true}
-                    onChangeText={() => {setHadEmail(true)}}
+                    onChangeText={() => {setHadPassword(true)}}
                     autoCapitalize="none"
+                    secureTextEntry={true}
+                    textContentType="password"
                 />
-                <Text style={styles.input_container_subtext}>You'll need to confirm this email later.</Text>
-                {!hadEmail && (
+                <Text style={styles.input_container_subtext}>Use atleast 8 characters.</Text>
+                {!hadPassword && (
                     <Box padding='s'>
                         <RestyleButton title="Next" variant="primary" textColor="text" onPress={() => {}} disabled={true}/>
                     </Box>
                 )}
-                {hadEmail && (
+                {hadPassword && (
                     <Box padding='s'>
-                        <RestyleButton title="Next" textColor="secondary" onPress={() => {router.push('/signup/step2')}} disabled={false}/>
+                        <RestyleButton title="Next" textColor="secondary" onPress={() => {router.push('/signup/step3')}} disabled={false}/>
                     </Box>
                 )}
             </Box>
