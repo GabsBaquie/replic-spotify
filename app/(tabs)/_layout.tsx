@@ -2,11 +2,10 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 import { useTheme } from '@shopify/restyle';
-
 import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { Theme } from '@/theme/theme';
+
 
 export default function TabLayout() {
   const theme = useTheme<Theme>();
@@ -28,7 +27,7 @@ export default function TabLayout() {
           default: {
             backgroundColor: theme.colors.tabBarBackground,
             borderTopColor: theme.colors.tabBarBackground,
-            borderTopWidth: 10,
+            borderTopWidth: 0,
           },
         }),
       }}>
@@ -37,7 +36,7 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <Ionicons size={28} name="home" color={color} />
           ),
         }}
       />
@@ -46,7 +45,7 @@ export default function TabLayout() {
         options={{
           title: 'Search',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="magnifyingglass" color={color} />
+            <Ionicons size={28} name="search" color={color} />
           ),
         }}
       />

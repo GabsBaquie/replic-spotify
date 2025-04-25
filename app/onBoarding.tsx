@@ -54,6 +54,7 @@ export default function Onboarding() {
         </Box>
 
         <Box style={styles.boxAuyh}>
+          
         <RestyleButton 
                   title="Sign up free"
                   variant="primary"
