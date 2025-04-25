@@ -38,18 +38,20 @@ export function RestyleButton({
       disabled={disabled}
       style={{ 
         opacity: disabled ? 0.5 : 1,
-        width: fullWidth ? '100%' : undefined 
+        width: fullWidth ? '100%' : undefined,
+        flexDirection: 'row',
+        alignItems: 'center', 
+        justifyContent: 'center'
       }}
       {...rest}>
-      <Box flexDirection="row" alignItems="center" justifyContent="center">
         {icon && <Box marginRight="s">{icon}</Box>}
         <Text 
           variant="body" 
           color={textColor || (variant === 'outline' ? 'text' : 'mainForeground')}
+          style={{ backgroundColor: 'transparent' }}
         >
           {title}
         </Text>
-      </Box>
     </BaseButton>
   );
 }
