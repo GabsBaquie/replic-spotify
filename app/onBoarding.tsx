@@ -4,6 +4,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { Box, Text } from '@/components/restyle';
 import { CustomIcon } from '@/components/ui/CustomIcon';
 import { RestyleButton } from '@/components/RestyleButton';
+import { router } from 'expo-router';
 
 
 export default function Onboarding() {
@@ -57,7 +58,7 @@ export default function Onboarding() {
                   title="Sign up free"
                   variant="primary"
                   textColor="textSecondary"
-                  onPress={() => {}}
+                  onPress={() => {router.push('/signup/step1')}}
                 />
 
           <RestyleButton 
