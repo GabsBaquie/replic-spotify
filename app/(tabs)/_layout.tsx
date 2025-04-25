@@ -9,12 +9,11 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.tint,
+        tabBarInactiveTintColor: Colors.forcedLight.tabIconDefault, // Utilisation de la couleur forcée
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,

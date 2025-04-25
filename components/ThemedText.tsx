@@ -1,60 +1,27 @@
-import { Text, type TextProps, StyleSheet } from 'react-native';
+import { createText } from '@shopify/restyle';
+import type { Theme } from '@/theme/theme';
 
-import { useThemeColor } from '@/hooks/useThemeColor';
+const RestyleText = createText<Theme>();
 
-export type ThemedTextProps = TextProps & {
-  lightColor?: string;
-  darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+type ThemedTextProps = React.ComponentProps<typeof RestyleText> & {
+  variant?: keyof Theme['textVariants'];
+  style?: any;
 };
 
-export function ThemedText({
+export function ThemedText({ 
+  variant = 'body',
   style,
-  lightColor,
-  darkColor,
-  type = 'default',
-  ...rest
+  color = "textPrimary",
+  ...rest 
 }: ThemedTextProps) {
-  const color = useThemeColor({ dark: darkColor }, 'text');
-
   return (
-    <Text
-      style={[
-        { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
-        style,
-      ]}
+    <RestyleText 
+      variant={variant}
+      color={color}
+      style={style}
       {...rest}
     />
   );
 }
 
-const styles = StyleSheet.create({
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    lineHeight: 30,
-    fontSize: 16,
-    color: '#0a7ea4',
-  },
-});
+export type { ThemedTextProps };
