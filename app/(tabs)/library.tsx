@@ -3,17 +3,17 @@ import { StyleSheet, Image, Platform } from 'react-native';
 import { Collapsible } from '@/components/Collapsible';
 import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Box, Text} from '@/components/restyle'
 
 export default function TabTwoScreen() {
   return (
     <ParallaxScrollView
       headerImage={
-        <IconSymbol
+        <Ionicons
           size={310}
           color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
+          name='chevron-back'
           style={styles.headerImage}
         />
       }>

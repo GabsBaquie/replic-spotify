@@ -1,9 +1,9 @@
 import { PropsWithChildren, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
 import { Box, Text } from './restyle';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,8 +15,8 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
         style={styles.heading}
         onPress={() => setIsOpen((value) => !value)}
         activeOpacity={0.8}>
-        <IconSymbol
-          name="chevron.right"
+        <Ionicons
+          name="chevron-forward"
           size={18}
           weight="medium"
           color={theme.colors.text}
