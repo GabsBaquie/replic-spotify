@@ -23,7 +23,7 @@ const theme = createTheme({
     cardPrimaryBackground: palette.spotifyDarkGray,
     cardSecondaryBackground: '#181818',
     
-    // Couleurs de texte - Assurez-vous que ces couleurs sont utilisées dans textVariants
+    // Couleurs de texte
     textPrimary: palette.spotifyWhite,
     textSecondary: palette.spotifyLightGray,
     
@@ -31,8 +31,11 @@ const theme = createTheme({
     accent: palette.spotifyGreen,
     tint: palette.spotifyWhite,
     icon: palette.spotifyWhite,
-    tabIconDefault: palette.spotifyWhite, // Changé en blanc
-    tabIconSelected: palette.spotifyWhite,
+    
+    // Couleurs de la barre d'onglets
+    tabBarActive: palette.spotifyWhite,
+    tabBarInactive: palette.spotifyLightGray,
+    tabBarBackground: palette.spotifyBlack,
   },
   spacing: {
     xs: 4,
@@ -58,6 +61,16 @@ const theme = createTheme({
     },
     defaults: {
       fontSize: 16,
+      color: 'textPrimary', 
+    },
+    link: {
+      fontSize: 16,
+      color: 'accent',
+      textDecorationLine: 'underline',
+    },
+    defaultSemiBold: {
+      fontSize: 16,
+      fontWeight: '600',
       color: 'textPrimary', 
     },
   },
