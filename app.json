@@ -45,6 +45,12 @@
         "projectId": "f5afc72f-92d1-47ac-86cd-25b02da81211"
       }
     },
-    "owner": "replic-spotify"
+    "owner": "replic-spotify",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f5afc72f-92d1-47ac-86cd-25b02da81211"
+    }
   }
 }
