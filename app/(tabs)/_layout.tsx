@@ -5,7 +5,7 @@ import { useTheme } from '@shopify/restyle';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { Theme } from '@/theme/theme';
 
 export default function TabLayout() {
@@ -18,14 +18,17 @@ export default function TabLayout() {
         tabBarInactiveTintColor: theme.colors.tabBarInactive,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',
             backgroundColor: theme.colors.tabBarBackground,
+            borderTopColor: theme.colors.tabBarBackground,
+            borderTopWidth: 10,
           },
           default: {
             backgroundColor: theme.colors.tabBarBackground,
+            borderTopColor: theme.colors.tabBarBackground,
+            borderTopWidth: 10,
           },
         }),
       }}>
@@ -39,11 +42,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="search"
         options={{
-          title: 'Explore',
+          title: 'Search',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
+            <IconSymbol size={28} name="magnifyingglass" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="library"
+        options={{
+          title: 'Your Library',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="library" size={24} color={color} />
           ),
         }}
       />
