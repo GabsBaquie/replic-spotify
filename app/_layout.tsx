@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { Box } from '@/components/restyle';
 
 import theme from '@/theme/theme';
 import { QueryClientProvider } from '@tanstack/react-query';

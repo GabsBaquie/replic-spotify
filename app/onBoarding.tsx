@@ -1,12 +1,13 @@
 import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { Box, Text } from '@/components/restyle';
+import { CustomIcon } from '@/components/ui/CustomIcon';
+import { RestyleButton } from '@/components/RestyleButton';
+
 
 export default function Onboarding() {
   return (
-    <>
       <ParallaxScrollView
         headerImage={
           <View style={styles.headerContainer}>
@@ -23,53 +24,77 @@ export default function Onboarding() {
           </View>
         }>
 
-    <ThemedView style={styles.titleContainer}>
+        <Box 
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          flex={1}
+          gap="m"
+        >
           <Image
-                      source={require('@/assets/images/spotify-logo-ligth.png')}
-                      style={styles.iconLogo}
-                      resizeMode="contain"
-                    />
+            source={require('@/assets/images/spotify-logo-ligth.png')}
+            style={styles.iconLogo}
+            resizeMode="contain"
+          />
+          <Text 
+            color="text"
+            variant="title"
+            textAlign="center"
+          >
+            Millions of Songs. 
+          </Text>
+          <Text 
+            color="text"
+            variant="title"
+            textAlign="center"
+          >
+            Free on Spotify.
+          </Text>
+        </Box>
 
-            <ThemedText 
-              color="textPrimary"
-              variant="title"
-              style={styles.stepContainer}
-            >
-              Millions of Songs. 
-            </ThemedText>
-            <ThemedText 
-              color="textPrimary"
-              variant="title"
-              style={styles.stepContainer}
-            >
-              Free on Spotify.
-            </ThemedText>
-          </ThemedView>
+        <Box style={styles.boxAuyh}>
+        <RestyleButton 
+                  title="Sign up free"
+                  variant="primary"
+                  textColor="textSecondary"
+                  onPress={() => {}}
+                />
+
+          <RestyleButton 
+                  title="Continue with Google"
+                  variant="outline"
+                  icon={<CustomIcon source={require('@/assets/images/google.png')} size={20} />}
+                  onPress={() => {}}
+                />
+
+          <RestyleButton 
+                  title="Continue with Facebook"
+                  variant="outline"
+                  icon={<CustomIcon source={require('@/assets/images/facebook.png')} size={20} />}
+                  onPress={() => {}}
+                />
+
+          <RestyleButton 
+                  title="Continue with Apple"
+                  variant="outline"
+                  icon={<CustomIcon source={require('@/assets/images/apple.png')} size={20} />}
+                  onPress={() => {}}
+                />
+
+          <RestyleButton 
+                  title="Log in"
+                  variant="transparent"
+                  onPress={() => {}}
+                />
+        </Box>
+
       </ParallaxScrollView>
-
-</>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 15,
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  stepContainer: {
-    alignItems: 'center',
-    textAlign: 'center',
-  },
   headerContainer: {
-    height: 450,
+    height: 400,
     width: '100%',
   },
   reactLogo: {
@@ -88,4 +113,9 @@ const styles = StyleSheet.create({
     height: 50,
     width: 50,
   },
+  boxAuyh: {
+    gap: 10,
+    marginHorizontal: 50,
+    marginVertical: 20
+  }
 });
