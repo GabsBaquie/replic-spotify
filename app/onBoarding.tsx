@@ -6,7 +6,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { Box, Text } from '@/components/restyle';
 import { CustomIcon } from '@/components/ui/CustomIcon';
 import { RestyleButton } from '@/components/RestyleButton';
-import { useSpotifyAuth } from '@/query/spotifyAuth'; // adapte le chemin si besoin
+import { useSpotifyAuth } from '@/query/spotifyAuth';
 
 export default function Onboarding() {
   const { promptAsync, getAccessToken, response } = useSpotifyAuth();
@@ -15,14 +15,20 @@ export default function Onboarding() {
     const fetchToken = async () => {
       const tokenData = await getAccessToken();
       if (tokenData?.access_token) {
-        // Naviguer vers ton app principale avec le token (ou le stocker)
-        Alert.alert('Connexion réussie', 'Token obtenu avec succès.');
-        router.push('/'); // change cette route si besoin
+        console.log('Token obtenu avec succès.');
+        console.log(tokenData);
       }
     };
+    
 
     if (response?.type === 'success') {
+      if (response.authentication?.accessToken) {
+        console.log('Connexion réussie : Token obtenu avec succès.', response.authentication.accessToken);
+      } else {
+        console.log('Connexion réussie : Pas d\'accessToken dans la réponse.');
+      }
       fetchToken();
+      router.push('/(tabs)/library');
     }
   }, [response]);
 
