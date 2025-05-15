@@ -1,5 +1,7 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import { exchangeCodeAsync, TokenResponse } from 'expo-auth-session';
+
 WebBrowser.maybeCompleteAuthSession();
 
 const discovery = {
@@ -8,8 +10,7 @@ const discovery = {
 };
 
 const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID as string;
-const clientSecret = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
-const scopes = ['user-read-email', 'playlist-read-private'];
+const scopes = ['user-read-email', 'playlist-read-private', 'user-read-private', 'user-read-recently-played', 'user-top-read'];
 const redirectUri = process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI as string;
 
 export function useSpotifyAuth() {
@@ -19,32 +20,36 @@ export function useSpotifyAuth() {
       scopes,
       redirectUri,
       responseType: 'code',
+      usePKCE: true,
     },
     discovery
   );
 
-console.log('redirectUri:', redirectUri); // Debugging line
-
   // Échange du code contre un token
   const getAccessToken = async () => {
     if (response?.type !== 'success' || !response.params.code) return null;
+  
+    try {
+      const tokenResult: TokenResponse = await exchangeCodeAsync(
+        {
+          code: response.params.code,
+          clientId,
+          redirectUri,
+          extraParams: {
+            code_verifier: request?.codeVerifier ?? '',
+          },
+        },
+        discovery
+      );
 
-    const credsB64 = btoa(`${clientId}:${clientSecret}`);
+      // console.log('Token obtenu avec succès.', tokenResult);
 
-    const res = await fetch(discovery.tokenEndpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${credsB64}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `grant_type=authorization_code&code=${response.params.code}&redirect_uri=${encodeURIComponent(
-        redirectUri
-      )}`,
-    });
+      return tokenResult;
 
-    const json = await res.json();
-    if (!json.access_token) throw new Error('Access token manquant');
-    return json;
+    } catch (err) {
+      console.error('Token exchange failed:', err);
+      return null;
+    }
   };
 
   return { request, promptAsync, getAccessToken, response };
