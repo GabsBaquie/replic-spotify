@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "exp",
+    "scheme": "replicspotify",
     "platforms": ["ios", "android"],
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
@@ -52,9 +52,7 @@
       }
     },
     "owner": "replic-spotify",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/f5afc72f-92d1-47ac-86cd-25b02da81211"
     }
