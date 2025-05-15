@@ -1,14 +1,13 @@
-import React from 'react';
-import { StyleSheet } from 'react-native';
-import { Box, Text } from '@/components/restyle';
+import { Box, Text } from "@/components/restyle"
+import { StyleSheet } from "react-native"
 
-const Library = () => {
+const Home = () => {
     return (
         <Box style={styles.container}>
-            <Text style={styles.text}>Library</Text>
+            <Text style={styles.text}>Home</Text>
         </Box>
-    );
-};
+    )
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -22,4 +21,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Library;
+export default Home;
