@@ -3,11 +3,11 @@ import { Redirect } from 'expo-router';
 import { Box, Text } from '@/components/restyle';
 
 export default function HomeScreen() {
-  // const isoboarding = true;
+  const isoboarding = true;
 
-  // if (isoboarding) {
-  //   return <Redirect href="/onBoarding" />;
-  // }
+  if (isoboarding) {
+    return <Redirect href="/onBoarding" />;
+  }
   
   return (
    <Box flex={1} justifyContent="center" alignItems="center">
