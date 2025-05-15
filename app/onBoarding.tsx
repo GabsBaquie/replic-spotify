@@ -7,39 +7,58 @@ import { Box, Text } from '@/components/restyle';
 import { CustomIcon } from '@/components/ui/CustomIcon';
 import { RestyleButton } from '@/components/RestyleButton';
 import { useSpotifyAuth } from '@/query/spotifyAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 export default function Onboarding() {
   const { promptAsync, getAccessToken, response } = useSpotifyAuth();
+  const animatedValue = useSharedValue(0);
+
+  useEffect(() => {
+    animatedValue.value = withRepeat(withTiming(1, { duration: 10 * 1000 }), -1, true);
+  }, []);
 
   useEffect(() => {
     const fetchToken = async () => {
       const tokenData = await getAccessToken();
-      if (tokenData?.access_token) {
-        console.log('Token obtenu avec succès.');
-        console.log(tokenData);
+      if (tokenData?.accessToken) {
+        await AsyncStorage.setItem('spotify_access_token', tokenData.accessToken);
+        console.log('Token Spotify stocké :', tokenData.accessToken);
+        router.push('/(tabs)/home');
       }
     };
     
-
     if (response?.type === 'success') {
-      if (response.authentication?.accessToken) {
-        console.log('Connexion réussie : Token obtenu avec succès.', response.authentication.accessToken);
-      } else {
-        console.log('Connexion réussie : Pas d\'accessToken dans la réponse.');
-      }
       fetchToken();
-      router.push('/(tabs)/library');
     }
   }, [response]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const translateY = animatedValue.value * 200;
+    const translateX = -(animatedValue.value * 100);
+    return {
+      transform: [
+        {
+          translateY,
+        },
+        {
+          translateX,
+        }
+      ],
+    };
+  }
+  );
 
   return (
     <ParallaxScrollView
       headerImage={
         <View style={styles.headerContainer}>
-          <Image
-            source={require('@/assets/images/spotify-cover.png')}
-            style={styles.reactLogo}
-          />
+          <Animated.View style={[StyleSheet.absoluteFill,animatedStyle]}>
+            <Image
+              source={require('@/assets/images/spotify-cover-2.png')}
+              style={styles.reactLogo}
+            />
+          </Animated.View>
           <LinearGradient
             colors={['transparent', '#121212', '#121212']}
             style={styles.gradient}
@@ -105,7 +124,7 @@ const styles = StyleSheet.create({
   reactLogo: {
     height: '100%',
     width: '100%',
-    position: 'absolute',
+    transform: [{ scale: 2 }],
   },
   gradient: {
     position: 'absolute',
