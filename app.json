@@ -5,7 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "exp",
+    "platforms": ["ios", "android"],
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
@@ -50,7 +51,7 @@
         "projectId": "f5afc72f-92d1-47ac-86cd-25b02da81211"
       }
     },
-    "owner": "replic-spotify",
+    "owner": "Lytzeer",
     "runtimeVersion": {
       "policy": "appVersion"
     },
