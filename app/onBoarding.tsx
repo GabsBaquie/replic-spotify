@@ -6,11 +6,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { Box, Text } from '@/components/restyle';
 import { CustomIcon } from '@/components/ui/CustomIcon';
 import { RestyleButton } from '@/components/RestyleButton';
-import { useSpotifyAuth } from '@/query/spotifyAuth'; // adapte le chemin si besoin
-import Constants from 'expo-constants';
-
-const clientId = Constants.expoConfig?.extra?.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
-const redirectUri = Constants.expoConfig?.extra?.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI;
+import { useSpotifyAuth } from '@/query/spotifyAuth';
 
 export default function Onboarding() {
   const { promptAsync, getAccessToken, response } = useSpotifyAuth();
