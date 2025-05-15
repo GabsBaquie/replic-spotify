@@ -1,6 +1,5 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
-
 WebBrowser.maybeCompleteAuthSession();
 
 const discovery = {
@@ -8,11 +7,10 @@ const discovery = {
   tokenEndpoint: 'https://accounts.spotify.com/api/token',
 };
 
-const clientId = 'clientid';
-const clientSecret = 'clientsecret'; // Ne pas mettre ça en prod dans l'app mobile !
+const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID as string;
+const clientSecret = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_SECRET;
 const scopes = ['user-read-email', 'playlist-read-private'];
-
-const redirectUri = 'redirecturi';
+const redirectUri = process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI as string;
 
 export function useSpotifyAuth() {
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
