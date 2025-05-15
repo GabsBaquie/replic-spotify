@@ -7,6 +7,7 @@ import { Box, Text } from '@/components/restyle';
 import { CustomIcon } from '@/components/ui/CustomIcon';
 import { RestyleButton } from '@/components/RestyleButton';
 import { useSpotifyAuth } from '@/query/spotifyAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Onboarding() {
   const { promptAsync, getAccessToken, response } = useSpotifyAuth();
@@ -14,21 +15,15 @@ export default function Onboarding() {
   useEffect(() => {
     const fetchToken = async () => {
       const tokenData = await getAccessToken();
-      if (tokenData?.access_token) {
-        console.log('Token obtenu avec succès.');
-        console.log(tokenData);
+      if (tokenData?.accessToken) {
+        await AsyncStorage.setItem('spotify_access_token', tokenData.accessToken);
+        console.log('Token Spotify stocké :', tokenData.accessToken);
+        router.push('/(tabs)/home');
       }
     };
     
-
     if (response?.type === 'success') {
-      if (response.authentication?.accessToken) {
-        console.log('Connexion réussie : Token obtenu avec succès.', response.authentication.accessToken);
-      } else {
-        console.log('Connexion réussie : Pas d\'accessToken dans la réponse.');
-      }
       fetchToken();
-      router.push('/(tabs)/library');
     }
   }, [response]);
 
