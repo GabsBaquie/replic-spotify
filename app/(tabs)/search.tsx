@@ -4,6 +4,7 @@ import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from '@/components/RestyleButton';
 import searchContent from '@/query/profile/searchContent';
 import { TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
 
 const SearchPage = () => {
     const [loading, setLoading] = useState(false);
@@ -69,9 +70,24 @@ const SearchPage = () => {
                         } else if (item.owner) {
                             type = 'playlist';
                         }
-                
+
+                        let path = '';
+                        if (type === 'track') path = '/track/[id]';
+                        else if (type === 'album') path = '/album/[id]';
+                        else if (type === 'artist') path = '/artist/[id]';
+                        else if (type === 'playlist') path = '/playlist/[id]';
+
                         return (
-                            <TouchableOpacity onPress={() => console.log('Item pressed:', item)}>
+                            <TouchableOpacity onPress={() => router.push(
+                                {
+                                    pathname: path as any,
+                                    params: { 
+                                        id: item.id,
+                                        track: JSON.stringify(item),
+                                     }
+                                    
+                                }
+                            )}>
 
                                 <Box style={{ marginVertical: 10 }} flexDirection="row-reverse" alignItems="center" justifyContent="flex-end" gap={"m"}>
                                     <Box>
