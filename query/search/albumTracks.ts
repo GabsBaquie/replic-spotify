@@ -21,9 +21,5 @@ export default async function albumTracks(
             throw new Error(data?.error?.message || 'Failed to fetch album tracks');
         }
 
-        // Dev LOG
-        console.log('Album Tracks Data:', data);
-        // End Dev LOG
-
         return data;
     }
