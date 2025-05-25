@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, Image, FlatList } from 'react-native';
 import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from '@/components/RestyleButton';
-import searchContent from '@/query/profile/searchContent';
+import searchContent from '@/query/search/searchContent';
 import { TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 
@@ -12,7 +12,6 @@ const SearchPage = () => {
     const [query, setQuery] = useState('');
 
     const handleSearch = async () => {
-        console.log('Searching for:', query);
         setLoading(true);
         try {
             const result = await searchContent(query);
@@ -83,7 +82,7 @@ const SearchPage = () => {
                                     pathname: path as any,
                                     params: { 
                                         id: item.id,
-                                        track: JSON.stringify(item),
+                                        item: JSON.stringify(item),
                                      }
                                     
                                 }

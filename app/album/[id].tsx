@@ -1,19 +1,37 @@
 import { Box, Text } from '@/components/restyle';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { useState, useEffect } from 'react';
+import { Image, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import albumTracks from '@/query/search/albumTracks';
 
-export default function TrackScreen() {
+export default function AlbumScreen() {
   const { item } = useLocalSearchParams();
   const data = JSON.parse(item as string);
   const [playButtonImage, setPlayButtonImage] = useState(require('@/assets/images/icons/play.png'));
   const [downloadImage, setDownloadImage] = useState(require('@/assets/images/icons/download_off.png'));
   const [likeImage, setLikeImage] = useState(require('@/assets/images/icons/like_off.png'));
+  const [loading, setLoading] = useState(true);
+  const [tracks, setTracks] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTracks = async () => {
+      setLoading(true);
+      try {
+        const trackData = await albumTracks(data.id);
+        setTracks(trackData.items);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching album tracks:', error);
+        setLoading(false);
+      }
+    };
+    fetchTracks();
+  }, [data.id]);
 
   return (
     <Box style={styles.container}>
       <Box flexDirection="row" justifyContent={'space-around'} backgroundColor='transparent' style={{ display: 'flex' }} width={'100%'}>
-        <Image source={{ uri: data.album.images[0]?.url }} style={{ width: 225, height: 225, justifyContent: 'center', display: 'flex' }} />
+        <Image source={{ uri: data.images[0]?.url }} style={{ width: 225, height: 225, justifyContent: 'center', display: 'flex' }} />
       </Box>
       <Box flexDirection="row" justifyContent={'space-between'}alignItems={'center'}>
         <Box>
@@ -24,13 +42,13 @@ export default function TrackScreen() {
             </Text>
             <Box flexDirection="row" gap={'xs'} style={{ opacity: 0.5 }} >
               <Text variant="caption" color="text">
-                Single
+                Album
               </Text>
               <Text variant="caption" color="text">
                 -
               </Text>
               <Text variant="caption" color="text">
-                {data.album.release_date.split('-')[0]}
+                {data.release_date.split('-')[0]}
               </Text>
             </Box>
           </Box>
@@ -86,23 +104,31 @@ export default function TrackScreen() {
           </TouchableOpacity>
         </Box>
       </Box>
-      <Box flexDirection="row" gap={'m'} paddingVertical={'l'} alignItems="center" justifyContent="space-between">
-        <Box>
-          <Text variant="body" color="text">
-            {data.name}
-          </Text>
-          <Text variant="body" color="text" style={{ opacity: 0.5 }}>
-            {data.artists[0]?.name}
-          </Text>
+      <FlatList
+      data={tracks}
+      style={{ marginTop: 20 }}
+      keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+      renderItem={({ item }) => (
+        <Box flexDirection="row" alignItems="center" justifyContent="space-between" marginBottom="s">
+          <Box>
+              <Text variant="body" color="text">
+              {item.name}
+              </Text>
+              <Text variant="body" color="text" style={{ opacity: 0.5 }}>
+              {item.artists?.[0]?.name}
+              </Text>
+          </Box>
+          <TouchableOpacity>
+              <Image
+              source={require('@/assets/images/icons/more.png')}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+              />
+          </TouchableOpacity>
         </Box>
-        <TouchableOpacity>
-          <Image
-            source={require('@/assets/images/icons/more.png')}
-            style={{ width: 20, height: 20 }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      </Box>
+        )}
+        showsVerticalScrollIndicator={false}
+      />
     </Box>
   );
 }
