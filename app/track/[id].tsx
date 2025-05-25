@@ -19,9 +19,21 @@ export default function TrackScreen() {
         <Box>
           <Box flexDirection="column" paddingVertical={'l'} >
             <Text>{data.name}</Text>
-            <Text variant="body" color="text">
-              {data.artists[0]?.name}
-            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                router.push({
+                  pathname: '/artist/[id]',
+                  params: {
+                    id: data.artists[0].id,
+                    item: JSON.stringify(data.artists[0]),
+                  },
+                });
+              }
+            }>
+              <Text variant="body" color="text">
+                {data.artists[0]?.name}
+              </Text>
+            </TouchableOpacity>
             <Box flexDirection="row" gap={'xs'} style={{ opacity: 0.5 }} >
               <Text variant="caption" color="text">
                 Single
