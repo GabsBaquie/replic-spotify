@@ -55,7 +55,7 @@ export default function Onboarding() {
         <View style={styles.headerContainer}>
           <Animated.View style={[StyleSheet.absoluteFill,animatedStyle]}>
             <Image
-              source={require('@/assets/images/spotify-cover-2.png')}
+              source={require('@/assets/images/image-cover-3.png')}
               style={styles.reactLogo}
             />
           </Animated.View>
