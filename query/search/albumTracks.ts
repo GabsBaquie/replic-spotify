@@ -2,14 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default async function albumTracks(
     albumId: string,
-    limit = 10,
     offset = 0
     ) {
         const token = await AsyncStorage.getItem('spotify_access_token');
         if (!token) throw new Error('No access token');
 
         const res = await fetch(
-            `https://api.spotify.com/v1/albums/${albumId}/tracks?market=FR&limit=${limit}&offset=${offset}`,
+            `https://api.spotify.com/v1/albums/${albumId}/tracks?market=FR&offset=${offset}`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
