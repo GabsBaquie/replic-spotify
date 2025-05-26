@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Image, StyleSheet, View, Alert } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
