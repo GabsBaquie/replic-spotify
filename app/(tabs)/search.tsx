@@ -4,11 +4,13 @@ import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from '@/components/RestyleButton';
 import searchContent from '@/query/profile/searchContent';
 import { TouchableOpacity } from 'react-native';
+import TrackPlayer from '@/components/player/TrackPlayer';
 
 const SearchPage = () => {
     const [loading, setLoading] = useState(false);
     const [searchResult, setSearchResult] = useState<any>(null);
     const [query, setQuery] = useState('');
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const handleSearch = async () => {
         console.log('Searching for:', query);
@@ -71,7 +73,11 @@ const SearchPage = () => {
                         }
                 
                         return (
-                            <TouchableOpacity onPress={() => console.log('Item pressed:', item)}>
+                            <TouchableOpacity onPress={() => {
+                                if (type === 'track') {
+                                    setPreviewUrl(item.preview_url || null);
+                                }
+                            }}>
 
                                 <Box style={{ marginVertical: 10 }} flexDirection="row-reverse" alignItems="center" justifyContent="flex-end" gap={"m"}>
                                     <Box>
@@ -119,6 +125,7 @@ const SearchPage = () => {
             ) : (
                 <Text>No results found</Text>
             )}
+            <TrackPlayer previewUrl={previewUrl} />
         </Box>
     );
 };
