@@ -23,7 +23,5 @@ export default async function searchContent(
   if (!res.ok) {
     throw new Error(data?.error?.message || 'Failed to fetch search results');
   }
-  console.log('Search results:', data);
-  console.log('Search results:', data.tracks.items[0].name);
   return data;
 }
