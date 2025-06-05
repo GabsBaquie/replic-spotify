@@ -5,6 +5,7 @@ import { RestyleButton } from '@/components/RestyleButton';
 import searchContent from '@/query/search/searchContent';
 import { TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 const SearchPage = () => {
     const [loading, setLoading] = useState(false);
@@ -47,7 +48,7 @@ const SearchPage = () => {
             {loading ? (
                 <Text>Loading...</Text>
             ) : searchResult ? (
-                <FlatList
+                <Animated.FlatList
                     data={[
                         ...(searchResult.tracks?.items || []),
                         ...(searchResult.albums?.items || []),
@@ -56,6 +57,11 @@ const SearchPage = () => {
                     ].filter(Boolean)}
                     style={{ marginBottom: 110 }}
                     keyExtractor={(item) => item.id}
+                    entering={FadeIn.duration(300)}
+                    exiting={FadeOut.duration(300)}
+                    maxToRenderPerBatch={7}
+                    initialNumToRender={7}
+                    windowSize={7}
                     renderItem={({ item }) => {
                         let type = '';
                         if (item.type) {
