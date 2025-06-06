@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, TextInput, Image, TouchableOpacity } from 'react-native';
 import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from '@/components/RestyleButton';
@@ -11,17 +11,25 @@ const Search = () => {
     const [searchResult, setSearchResult] = useState<any>(null);
     const [query, setQuery] = useState('');
 
-    const handleSearch = async () => {
-        setLoading(true);
-        try {
-            const result = await searchContent(query);
-            setSearchResult(result);
-        } catch (error) {
-            console.error('Error fetching search results:', error);
-        } finally {
-            setLoading(false);
+    // déclenchement de la recherche avec délai de 1s après saisie
+    useEffect(() => {
+        if (!query) {
+            setSearchResult(null);
+            return;
         }
-    };
+        setLoading(true);
+        const handler = setTimeout(async () => {
+            try {
+                const result = await searchContent(query);
+                setSearchResult(result);
+            } catch (error) {
+                console.error('Error fetching search results:', error);
+            } finally {
+                setLoading(false);
+            }
+        }, 1000);
+        return () => clearTimeout(handler);
+    }, [query]);
 
     return (
         <Box style={styles.container}>
@@ -34,13 +42,12 @@ const Search = () => {
                     autoCapitalize="none"
                     value={query}
                     onChangeText={setQuery}
-                    onEndEditing={handleSearch}
                     autoCorrect={false}
                 />
                 <RestyleButton
                     title="Cancel"
                     variant="transparent"
-                    onPress={() => {}}
+                    onPress={() => { setQuery(''); setSearchResult(null); }}
                 />
             </Box>
             <Text variant="body" color="text" style={styles.subtitle}>Search Result</Text>

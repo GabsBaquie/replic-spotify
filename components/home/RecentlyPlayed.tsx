@@ -1,34 +1,11 @@
-import { useEffect, useState } from 'react';
 import { View, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import getRecentlyPlayed from '@/query/profile/recentlyPlayed';
+import useRecentlyPlayed from '@/hooks/useRecentlyPlayed';
 import { Box, Text } from '@/components/restyle';
 
-// Define a minimal Track type matching Spotify API
-interface Track {
-  id: string;
-  name: string;
-  album: { id: string; images: { url: string }[] };
-  artists: { name: string }[];
-}
-
 export default function RecentlyPlayed() {
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { tracks, loading } = useRecentlyPlayed(20);
   const router = useRouter();
-
-  useEffect(() => {
-    getRecentlyPlayed(10)
-      .then((data: Track[]) => {
-        // remove duplicate tracks by id
-        const unique = data.filter((track: Track, idx: number, arr: Track[]) =>
-          arr.findIndex((t: Track) => t.id === track.id) === idx
-        );
-        setTracks(unique);
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
 
   if (loading) {
     return (
@@ -42,10 +19,11 @@ export default function RecentlyPlayed() {
   return (
     <Box style={styles.container}>
         
-      <Text>Recently Played</Text>
+      <Text style={{marginBottom: 10}}>Recently Played</Text>
 
       <FlatList
         horizontal
+        showsHorizontalScrollIndicator={false}
         data={tracks}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -75,8 +53,8 @@ export default function RecentlyPlayed() {
 
 const styles = StyleSheet.create({
   center: { flex: 2, justifyContent: 'center', alignItems: 'center' },
-  container: { marginTop: 20, maxHeight: 150 },
+  container: { marginTop: 20 },
   item: { flexDirection: 'column', alignItems: 'center', marginRight: 12 },
-  image: { width: 80, height: 80, borderRadius: 4 },
-  title: { fontSize: 16, fontWeight: '600', textAlign: 'center', width: 80 },
+  image: { width: 120, height: 120, borderRadius: 4 },
+  title: { fontSize: 16, fontWeight: '600', textAlign: 'center', width: 120 },
 }); 

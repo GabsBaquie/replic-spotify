@@ -1,4 +1,5 @@
 import { Box, Text } from '@/components/restyle';
+import PlayPauseButton from '@/components/ui/PlayPauseButton';
 import { useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Image, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
@@ -7,7 +8,6 @@ import albumTracks from '@/query/search/albumTracks';
 export default function AlbumScreen() {
   const { item } = useLocalSearchParams();
   const data = JSON.parse(item as string);
-  const [playButtonImage, setPlayButtonImage] = useState(require('@/assets/images/icons/play.png'));
   const [downloadImage, setDownloadImage] = useState(require('@/assets/images/icons/download_off.png'));
   const [likeImage, setLikeImage] = useState(require('@/assets/images/icons/like_off.png'));
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ export default function AlbumScreen() {
       <Box flexDirection="row" justifyContent={'space-around'} backgroundColor='transparent' style={{ display: 'flex' }} width={'100%'}>
         <Image source={{ uri: data.images[0]?.url }} style={{ width: 225, height: 225, justifyContent: 'center', display: 'flex' }} />
       </Box>
-      <Box flexDirection="row" justifyContent={'space-between'}alignItems={'center'}>
+      <Box flexDirection="row" justifyContent={'space-between'} alignItems={'center'}>
         <Box>
           <Box flexDirection="column" paddingVertical={'l'} >
             <Text>{data.name}</Text>
@@ -88,21 +88,7 @@ export default function AlbumScreen() {
             </TouchableOpacity>
           </Box>
         </Box>
-        <Box>
-          <TouchableOpacity style={styles.play_button} onPress={() => { 
-            setPlayButtonImage((prev: import('react-native').ImageSourcePropType) => {
-              return prev === require('@/assets/images/icons/play.png')
-                ? require('@/assets/images/icons/pause.png')
-                : require('@/assets/images/icons/play.png');
-            });
-          }}>
-            <Image
-              source={playButtonImage}
-              style={{ width: 20, height: 20}}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        </Box>
+        <PlayPauseButton />
       </Box>
       <FlatList
       data={tracks}
