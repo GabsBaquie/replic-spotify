@@ -38,15 +38,15 @@ export default function RootLayout() {
   return (
     <ThemeProvider theme={theme}>
        <SpotifyConnectDevice  />
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister: asyncStoragePersister }}
-      >
+          <PersistQueryClientProvider
+            client={queryClient} persistOptions={{ persister: asyncStoragePersister }}
+          > 
         <QueryClientProvider client={ queryClient }>
           <Stack screenOptions={{ headerShown: false }} />
         </QueryClientProvider>
+
         <StatusBar style="light" />
-      </PersistQueryClientProvider>      
+      </PersistQueryClientProvider>    
     </ThemeProvider>
     
   );

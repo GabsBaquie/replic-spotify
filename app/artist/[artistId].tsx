@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from '@/components/restyle';
-import { View, Image, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Image, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { getArtistDetails, getTopTracksByArtist } from '@/query/artist/Artist';
 import TrackPlayer from '@/components/player/TrackPlayer';
-import { playSpotifyTrack } from '@/query/player/playSpotifyTrack';
 
 export default function ArtistPage() {
   const { artistId } = useLocalSearchParams<{ artistId: string }>();

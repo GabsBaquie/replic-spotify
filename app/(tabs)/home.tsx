@@ -16,7 +16,6 @@ export default function Home() {
       <ScrollView>
         {tracks[0] && (
           <TrackPlayer
-            previewUrl={tracks[0].preview_url}
             trackId={tracks[0].id}
           />
         )}

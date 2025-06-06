@@ -1,16 +1,18 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { HapticTab } from '@/components/HapticTab';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { Theme } from '@/theme/theme';
+import NowPlayingBar from '@/components/player/NowPlayingBar';
 
 
 export default function TabLayout() {
   const theme = useTheme<Theme>();
 
   return (
+   <View style={{ height: '100%' }}>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.colors.tabBarActive,
@@ -59,5 +61,7 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    <NowPlayingBar /> 
+    </View>
   );
 }
