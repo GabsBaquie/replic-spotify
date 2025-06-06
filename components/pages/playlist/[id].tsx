@@ -1,13 +1,13 @@
 import { Box, Text } from '@/components/restyle';
-import PlayPauseButton from '@/components/ui/PlayPauseButton';
 import { useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Image, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import albumTracks from '@/query/search/albumTracks';
+import {fetchPlaylistTracks} from '@/query/search/playlistTracks';
 
-export default function AlbumScreen() {
+export default function PlaylistScreen() {
   const { item } = useLocalSearchParams();
   const data = JSON.parse(item as string);
+  const [playButtonImage, setPlayButtonImage] = useState(require('@/assets/images/icons/play.png'));
   const [downloadImage, setDownloadImage] = useState(require('@/assets/images/icons/download_off.png'));
   const [likeImage, setLikeImage] = useState(require('@/assets/images/icons/like_off.png'));
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ export default function AlbumScreen() {
     const fetchTracks = async () => {
       setLoading(true);
       try {
-        const trackData = await albumTracks(data.id);
+        const trackData = await fetchPlaylistTracks(data.id);
         setTracks(trackData.items);
         setLoading(false);
       } catch (error) {
@@ -33,24 +33,13 @@ export default function AlbumScreen() {
       <Box flexDirection="row" justifyContent={'space-around'} backgroundColor='transparent' style={{ display: 'flex' }} width={'100%'}>
         <Image source={{ uri: data.images[0]?.url }} style={{ width: 225, height: 225, justifyContent: 'center', display: 'flex' }} />
       </Box>
-      <Box flexDirection="row" justifyContent={'space-between'} alignItems={'center'}>
+      <Box flexDirection="row" justifyContent={'space-between'}alignItems={'center'}>
         <Box>
           <Box flexDirection="column" paddingVertical={'l'} >
             <Text>{data.name}</Text>
-            <Text variant="body" color="text">
-              {data.artists[0]?.name}
+            <Text variant="caption" color="text" style={{ opacity: 0.5 }}>
+              {data.owner?.display_name}
             </Text>
-            <Box flexDirection="row" gap={'xs'} style={{ opacity: 0.5 }} >
-              <Text variant="caption" color="text">
-                Album
-              </Text>
-              <Text variant="caption" color="text">
-                -
-              </Text>
-              <Text variant="caption" color="text">
-                {data.release_date.split('-')[0]}
-              </Text>
-            </Box>
           </Box>
           <Box flexDirection="row" gap={'m'}>
             <TouchableOpacity onPress={() => {
@@ -88,7 +77,21 @@ export default function AlbumScreen() {
             </TouchableOpacity>
           </Box>
         </Box>
-        <PlayPauseButton />
+        <Box>
+          <TouchableOpacity style={styles.play_button} onPress={() => { 
+            setPlayButtonImage((prev: import('react-native').ImageSourcePropType) => {
+              return prev === require('@/assets/images/icons/play.png')
+                ? require('@/assets/images/icons/pause.png')
+                : require('@/assets/images/icons/play.png');
+            });
+          }}>
+            <Image
+              source={playButtonImage}
+              style={{ width: 20, height: 20}}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </Box>
       </Box>
       <FlatList
       data={tracks}
@@ -98,10 +101,10 @@ export default function AlbumScreen() {
         <Box flexDirection="row" alignItems="center" justifyContent="space-between" marginBottom="s">
           <Box>
               <Text variant="body" color="text">
-              {item.name}
+              {item.track.name}
               </Text>
               <Text variant="body" color="text" style={{ opacity: 0.5 }}>
-              {item.artists?.[0]?.name}
+              {item.track.artists?.[0]?.name}
               </Text>
           </Box>
           <TouchableOpacity>

@@ -2,11 +2,7 @@ import { Box, Text } from '@/components/restyle';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import useSpotifyPlayer from '@/hooks/useSpotifyPlayer'
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getLocalDeviceId } from '@/query/player/getLocalDeviceId';
-
-const API_BASE = 'https://api.spotify.com/v1';
+import PlayPauseButton from '@/components/ui/PlayPauseButton';
 
 export default function TrackScreen() {
   const { item } = useLocalSearchParams();
@@ -15,33 +11,10 @@ export default function TrackScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [downloadImage, setDownloadImage] = useState(require('@/assets/images/icons/download_off.png'));
 
-  const { state, togglePlayPause } = useSpotifyPlayer();
-  const { isPaused } = state || { isPaused: false };
-
-  const handlePlayPause = async () => {
-    if (!state) return;
-    try {
-      if (state.isPaused) {
-        const token = await AsyncStorage.getItem('spotify_access_token');
-        if (!token) throw new Error('Token manquant');
-        const deviceId = await getLocalDeviceId();
-        if (!deviceId) throw new Error('Pas d’appareil Spotify');
-        await fetch(`${API_BASE}/me/player/play?device_id=${deviceId}`, {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ context_uri: `spotify:album:${data.album.id}` }),
-        });
-      } else {
-        togglePlayPause();
-      }
-    } catch (e) {
-      console.error('Erreur play album :', e);
-    }
-  };
-
   return (
     <Box style={styles.container}>
       <Box>
+        
         <Modal
           animationType="slide"
           transparent={true}
@@ -176,6 +149,7 @@ export default function TrackScreen() {
             </Box>
           </Box>
         </Modal>
+
         <Box flexDirection="row" justifyContent={'space-around'} backgroundColor='transparent' style={{ display: 'flex' }} width={'100%'}>
           <Image source={{ uri: data.album.images[0]?.url }} style={{ width: 225, height: 225, justifyContent: 'center', display: 'flex' }} />
         </Box>
@@ -261,17 +235,7 @@ export default function TrackScreen() {
               </TouchableOpacity>
             </Box>
           </Box>
-          <Box>
-            <TouchableOpacity style={styles.play_button} onPress={handlePlayPause}>
-              <Image
-                source={isPaused
-                  ? require('@/assets/images/icons/play.png')
-                  : require('@/assets/images/icons/pause.png')}
-                style={{ width: 20, height: 20 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </Box>
+          <PlayPauseButton />
         </Box>
         <Box flexDirection="row" gap={'m'} paddingVertical={'l'} alignItems="center" justifyContent="space-between">
           <Box>

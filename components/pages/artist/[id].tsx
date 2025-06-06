@@ -1,29 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
+import useArtist from '@/hooks/useArtist'
 import { Box, Text } from '@/components/restyle';
 import { View, Image, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { getArtistDetails, getTopTracksByArtist } from '@/query/artist/Artist';
-import TrackPlayer from '@/components/player/TrackPlayer';
-import { useQuery } from '@tanstack/react-query';
+import PlayPauseButton from '@/components/ui/PlayPauseButton';
 
 export default function ArtistScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const { artist: artistDetails, tracks, loading } = useArtist(id)
   const [selectedTrackUrl, setSelectedTrackUrl] = useState<string | null>(null);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
 
-  const { data: artistDetails, isLoading: isLoadingArtist } = useQuery({
-    queryKey: ['artist', id],
-    queryFn: () => getArtistDetails(id),
-  });
-
-  const { data: tracks, isLoading: isLoadingTracks } = useQuery({
-    queryKey: ['tracks', id],
-    queryFn: () => getTopTracksByArtist(id),
-  });
-
-  const isLoading = isLoadingArtist || isLoadingTracks;
-
-  if (isLoading) {
+  if (loading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />
@@ -47,9 +35,20 @@ export default function ArtistScreen() {
       }}
       style={styles.trackItem}
     >
-      <View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <Image
+          source={{ uri: item.album.images[0]?.url || 'https://via.placeholder.com/150' }}
+          style={{ width: 50, height: 50, borderRadius: 8, marginTop: 8 }}
+        />
         <Text style={styles.trackName}>{item.name}</Text>
       </View>
+      <TouchableOpacity onPress={() => {}}>
+        <Image
+          source={require('@/assets/images/icons/more.png')}
+          style={{ width: 20, height: 20 }}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -58,17 +57,20 @@ export default function ArtistScreen() {
       {artistDetails.images && artistDetails.images.length > 0 && (
         <Image source={{ uri: artistDetails.images[0].url }} style={styles.artistImage} />
       )}
-      <Text style={styles.artistName}>{artistDetails.name}</Text>
+
+      <Box flexDirection="row" alignItems="center" justifyContent="space-between" width="100%">
+        <Text style={styles.artistName}>{artistDetails.name}</Text>
+        <PlayPauseButton />
+      </Box>
+      
       <Text style={styles.heading}>Top Tracks</Text>
+      
       <FlatList 
         data={tracks}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         style={styles.trackList}
       />
-      {selectedTrackId && (
-        <TrackPlayer trackId={selectedTrackId} />
-      )}
     </Box>
   );
 }
@@ -93,7 +95,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 16,
-    textAlign: 'center',
   },
   heading: {
     fontSize: 22,
@@ -105,12 +106,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   trackItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    paddingVertical: 6,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   trackName: {
     fontSize: 16,
+    fontWeight: 'semibold',
   },
   errorText: {
     fontSize: 18,
