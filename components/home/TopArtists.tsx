@@ -60,7 +60,7 @@ export default function TopArtists() {
 
 const styles = StyleSheet.create({
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    container: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 150, display: 'flex', gap: 10},
+    container: { marginTop: 20, maxHeight: 150 },
     item: { flexDirection: 'column',  display: 'flex'},
     image: { width: 100, height: 100, marginRight: 10 },
     name: { fontSize: 16, color: 'white' },

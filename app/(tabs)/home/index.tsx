@@ -1,19 +1,18 @@
 import { Box } from "@/components/restyle";
 import TopArtists from "@/components/home/TopArtists";
-import { StyleSheet, ScrollView } from "react-native";
+import { StyleSheet } from "react-native";
+import RecentlyPlayed from '@/components/home/RecentlyPlayed';
 
 export default function Home() {
 
   return (
     <Box style={styles.container}>
       <TopArtists />
-      <ScrollView>
-       
-      </ScrollView>
+      <RecentlyPlayed />  
     </Box>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, paddingTop: 60, paddingHorizontal: 20 },
 })
