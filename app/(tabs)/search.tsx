@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, Image, FlatList } from 'react-native';
 import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from '@/components/RestyleButton';
-import searchContent from '@/query/profile/searchContent';
+import searchContent from '@/query/search/searchContent';
 import { TouchableOpacity } from 'react-native';
-import TrackPlayer from '@/components/player/TrackPlayer';
+import { router } from 'expo-router';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 const SearchPage = () => {
     const [loading, setLoading] = useState(false);
@@ -13,7 +14,6 @@ const SearchPage = () => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const handleSearch = async () => {
-        console.log('Searching for:', query);
         setLoading(true);
         try {
             const result = await searchContent(query);
@@ -49,7 +49,7 @@ const SearchPage = () => {
             {loading ? (
                 <Text>Loading...</Text>
             ) : searchResult ? (
-                <FlatList
+                <Animated.FlatList
                     data={[
                         ...(searchResult.tracks?.items || []),
                         ...(searchResult.albums?.items || []),
@@ -58,6 +58,11 @@ const SearchPage = () => {
                     ].filter(Boolean)}
                     style={{ marginBottom: 110 }}
                     keyExtractor={(item) => item.id}
+                    entering={FadeIn.duration(300)}
+                    exiting={FadeOut.duration(300)}
+                    maxToRenderPerBatch={7}
+                    initialNumToRender={7}
+                    windowSize={7}
                     renderItem={({ item }) => {
                         let type = '';
                         if (item.type) {
@@ -71,13 +76,26 @@ const SearchPage = () => {
                         } else if (item.owner) {
                             type = 'playlist';
                         }
-                
+
+                        let path = '';
+                        if (type === 'track') path = '/track/[id]';
+                        else if (type === 'album') path = '/album/[id]';
+                        else if (type === 'artist') path = '/artist/[id]';
+                        else if (type === 'playlist') path = '/playlist/[id]';
+
                         return (
-                            <TouchableOpacity onPress={() => {
-                                if (type === 'track') {
-                                    setPreviewUrl(item.preview_url || null);
+
+                            <TouchableOpacity onPress={() => router.push(
+                                {
+                                    pathname: path as any,
+                                    params: { 
+                                        id: item.id,
+                                        item: JSON.stringify(item),
+                                     }
+                                    
                                 }
-                            }}>
+                            )}>
+
 
                                 <Box style={{ marginVertical: 10 }} flexDirection="row-reverse" alignItems="center" justifyContent="flex-end" gap={"m"}>
                                     <Box>
@@ -125,7 +143,6 @@ const SearchPage = () => {
             ) : (
                 <Text>No results found</Text>
             )}
-            <TrackPlayer previewUrl={previewUrl} />
         </Box>
     );
 };

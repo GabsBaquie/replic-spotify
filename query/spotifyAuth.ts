@@ -7,6 +7,7 @@ const discovery = {
 };
 
 const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID as string;
+
 const scopes = [
   'user-read-email',
   'playlist-read-private',
@@ -16,7 +17,8 @@ const scopes = [
   'streaming',
   'user-read-playback-state',
   'user-modify-playback-state',
-];;
+];
+
 
 const redirectUri = process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI as string;
 
