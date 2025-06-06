@@ -47,10 +47,18 @@ export default function PlayPauseButton() {
     } else {
       // start playback for this URI
       if (!targetUri) return
-      // build request body: tracks play via URIs, contexts play via context_uri
-      const body: any = segments.includes('track')
-        ? { uris: [targetUri] }
-        : { context_uri: targetUri }
+      // build request body: track URIs for single track, else context playback with offset for albums
+      let body: any
+      if (segments.includes('track')) {
+        // for track pages, play the individual track URI
+        body = { uris: [targetUri] }
+      } else if (segments.includes('album')) {
+        // for album pages, play entire album starting at first track
+        body = { context_uri: targetUri, offset: { position: 0 } }
+      } else {
+        // for other contexts (artist, playlist), play context at default
+        body = { context_uri: targetUri }
+      }
       await fetch(`${API_BASE}/me/player/play?device_id=${deviceId}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
