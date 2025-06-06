@@ -1,8 +1,5 @@
 import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
 import { exchangeCodeAsync, TokenResponse } from 'expo-auth-session';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const discovery = {
   authorizationEndpoint: 'https://accounts.spotify.com/authorize',
@@ -21,6 +18,7 @@ const scopes = [
   'user-read-playback-state',
   'user-modify-playback-state',
 ];
+
 
 const redirectUri = process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI as string;
 
