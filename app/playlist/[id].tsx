@@ -2,7 +2,7 @@ import { Box, Text } from '@/components/restyle';
 import { useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Image, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import playlistTracks, {fetchPlaylistTracks} from '@/query/search/playlistTracks';
+import {fetchPlaylistTracks} from '@/query/search/playlistTracks';
 
 export default function PlaylistScreen() {
   const { item } = useLocalSearchParams();
