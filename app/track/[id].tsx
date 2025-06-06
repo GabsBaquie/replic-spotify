@@ -181,21 +181,6 @@ export default function TrackScreen() {
                   {data.album.release_date.split('-')[0]}
                 </Text>
               </Box>
-              <TouchableOpacity
-                onPress={() => {
-                  router.push({
-                    pathname: '/album/[id]',
-                    params: {
-                      id: data.album.id,
-                      item: JSON.stringify(data.album),
-                    },
-                  });
-                }}
-              >
-                <Text variant="caption" color="text" style={{ opacity: 0.3 }}>
-                  {data.album.name}
-                </Text>
-              </TouchableOpacity>
             </Box>
             <Box flexDirection="row" gap={'m'}>
               <TouchableOpacity onPress={() => {
