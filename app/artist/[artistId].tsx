@@ -54,9 +54,21 @@ export default function ArtistPage() {
       }}
       style={styles.trackItem}
     >
-      <View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+
+        <Image
+          source={{ uri: item.album.images[0]?.url || 'https://via.placeholder.com/150' }}
+          style={{ width: 50, height: 50, borderRadius: 8, marginTop: 8 }}
+        />
         <Text style={styles.trackName}>{item.name}</Text>
       </View>
+      <TouchableOpacity onPress={() => {}}>
+        <Image
+          source={require('@/assets/images/icons/more.png')}
+          style={{ width: 20, height: 20 }}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -73,9 +85,6 @@ export default function ArtistPage() {
         renderItem={renderItem}
         style={styles.trackList}
       />
-      {selectedTrackId && (
-        <TrackPlayer trackId={selectedTrackId} />
-      )}
     </Box>
   );
 }
@@ -100,7 +109,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 16,
-    textAlign: 'center',
   },
   heading: {
     fontSize: 22,
@@ -112,12 +120,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   trackItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    paddingVertical: 6,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   trackName: {
     fontSize: 16,
+    fontWeight: 'semibold',
   },
   errorText: {
     fontSize: 18,

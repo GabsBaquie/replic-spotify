@@ -111,7 +111,16 @@ export default function TrackScreen() {
                     View album
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ flexDirection: 'row', gap:10 }} onPress={() => {}}>
+                <TouchableOpacity style={{ flexDirection: 'row', gap:10 }} onPress={() => {
+                  router.push({
+                    pathname: '/artist/[artistId]',
+                    params: {
+                      artistId: data.artists[0].id,
+                      item: JSON.stringify(data.artists[0]),
+                    },
+                  });
+                  setModalVisible(false);
+                }}>
                   <Image
                     source={require('@/assets/images/icons/artist.png')}
                     style={{ width: 20, height: 20 }}
@@ -158,9 +167,9 @@ export default function TrackScreen() {
               <TouchableOpacity
                 onPress={() => {
                   router.push({
-                    pathname: '/artist/[id]',
+                    pathname: '/artist/[artistId]',
                     params: {
-                      id: data.artists[0].id,
+                      artistId: data.artists[0].id,
                       item: JSON.stringify(data.artists[0]),
                     },
                   });
