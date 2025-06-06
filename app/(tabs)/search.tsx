@@ -11,6 +11,7 @@ const SearchPage = () => {
     const [loading, setLoading] = useState(false);
     const [searchResult, setSearchResult] = useState<any>(null);
     const [query, setQuery] = useState('');
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const handleSearch = async () => {
         setLoading(true);
@@ -83,6 +84,7 @@ const SearchPage = () => {
                         else if (type === 'playlist') path = '/playlist/[id]';
 
                         return (
+
                             <TouchableOpacity onPress={() => router.push(
                                 {
                                     pathname: path as any,
@@ -93,6 +95,7 @@ const SearchPage = () => {
                                     
                                 }
                             )}>
+
 
                                 <Box style={{ marginVertical: 10 }} flexDirection="row-reverse" alignItems="center" justifyContent="flex-end" gap={"m"}>
                                     <Box>
