@@ -1,34 +1,11 @@
-import { useEffect, useState } from 'react';
 import { View, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import getRecentlyPlayed from '@/query/profile/recentlyPlayed';
+import useRecentlyPlayed from '@/hooks/useRecentlyPlayed';
 import { Box, Text } from '@/components/restyle';
 
-// Define a minimal Track type matching Spotify API
-interface Track {
-  id: string;
-  name: string;
-  album: { id: string; images: { url: string }[] };
-  artists: { name: string }[];
-}
-
 export default function RecentlyPlayed() {
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { tracks, loading } = useRecentlyPlayed(10);
   const router = useRouter();
-
-  useEffect(() => {
-    getRecentlyPlayed(10)
-      .then((data: Track[]) => {
-        // remove duplicate tracks by id
-        const unique = data.filter((track: Track, idx: number, arr: Track[]) =>
-          arr.findIndex((t: Track) => t.id === track.id) === idx
-        );
-        setTracks(unique);
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
 
   if (loading) {
     return (

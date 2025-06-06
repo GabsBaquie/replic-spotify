@@ -1,30 +1,11 @@
-import { useEffect, useState } from 'react';
 import { View, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import getTopArtists from '@/query/profile/topArtists';
+import useTopArtists from '@/hooks/useTopArtists';
 import { Box, Text } from '@/components/restyle';
 
-// Define Artist type
-type Artist = {
-  id: string;
-  name: string;
-  images: { url: string }[];
-};
-
 export default function TopArtists() {
-  const [artists, setArtists] = useState<Artist[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { artists, loading } = useTopArtists(10);
   const router = useRouter();
-
-  useEffect(() => {
-    getTopArtists(10)
-      .then(data => {
-        // console.log('Top artists fetched:', data);
-        setArtists(data);
-      })
-      .catch((err: any) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
 
   if (loading) {
     return (

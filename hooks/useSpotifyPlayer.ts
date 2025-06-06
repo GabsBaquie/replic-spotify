@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { getLocalDeviceId } from '@/query/player/getLocalDeviceId'
-import { playSpotifyTrack } from '@/query/player/playSpotifyTrack'
 
 const API_BASE = 'https://api.spotify.com/v1'
 
@@ -17,6 +16,7 @@ export type PlayerState = {
   trackDuration:    number
   isPaused:         boolean
   track:            TrackInfo
+  contextUri:       string | null
 }
 
 /**
@@ -59,6 +59,7 @@ export default function useSpotifyPlayer() {
           albumArtUri: item.album?.images?.[0]?.url || null,
           uri:         item.uri,
         },
+        contextUri: json.context?.uri || null,
       })
     } catch (e) {
       console.error('useSpotifyPlayer fetchState error:', e)
