@@ -20,7 +20,7 @@ export type PlayerState = {
 }
 
 /**
- * Hook pour piloter et récupérer l’état du playback Spotify.
+ * Hook pour piloter et récupérer l'état du playback Spotify.
  */
 export default function useSpotifyPlayer() {
   const [state, setState] = useState<PlayerState | null>(null)
@@ -33,29 +33,35 @@ export default function useSpotifyPlayer() {
       const res = await fetch(`${API_BASE}/me/player`, {
         headers: { Authorization: `Bearer ${token}` },
       })
+
       if (!res.ok) {
-        if ([204, 404].includes(res.status)) {
+        if (res.status === 204 || res.status === 404) {
           setState(null)
           return
         }
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error?.message || `Erreur ${res.status}`)
+        const errJson = await res.json().catch(() => ({}))
+        throw new Error(errJson.error?.message || `Erreur ${res.status}`)
       }
 
       const json = await res.json()
+      if (!json.item) {
+        setState(null)
+        return
+      }
       const item = json.item as any
       setState({
-        playbackPosition: json.progress_ms,
-        trackDuration:    item.duration_ms,
+        playbackPosition: json.progress_ms as number,
+        trackDuration:    item.duration_ms as number,
         isPaused:         !json.is_playing,
         track: {
           name:        item.name,
-          artists:     item.artists.map((a: any) => a.name),
-          albumArtUri: item.album.images[0]?.url || null,
+          artists:     Array.isArray(item.artists) ? item.artists.map((a: any) => a.name) : [],
+          albumArtUri: item.album?.images?.[0]?.url || null,
           uri:         item.uri,
         },
       })
-    } catch {
+    } catch (e) {
+      console.error('useSpotifyPlayer fetchState error:', e)
       setState(null)
     }
   }
@@ -68,22 +74,49 @@ export default function useSpotifyPlayer() {
 
   const togglePlayPause = async () => {
     if (!state) return
-    const token = await AsyncStorage.getItem('spotify_access_token')
-    if (!token) throw new Error('Token Spotify manquant')
-    const deviceId = await getLocalDeviceId()
-    if (!deviceId) throw new Error('Aucun device Spotify trouvé')
+    try {
+      const token = await AsyncStorage.getItem('spotify_access_token')
+      if (!token) throw new Error('Token Spotify manquant')
+      const deviceId = await getLocalDeviceId()
+      if (!deviceId) throw new Error('Aucun appareil Spotify trouvé')
 
-    if (state.isPaused) {
-      // relancer la lecture
-      await playSpotifyTrack(state.track.uri.split(':').pop()!, deviceId)
-    } else {
-      // mettre en pause
-      await fetch(`${API_BASE}/me/player/pause?device_id=${deviceId}`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      if (state.isPaused) {
+        // ▶︎ Reprendre la lecture à la position courante
+        const resumeUrl = `${API_BASE}/me/player/play?device_id=${deviceId}`
+        const resumeRes = await fetch(resumeUrl, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+        if (![204, 202].includes(resumeRes.status)) {
+          const errJson = await resumeRes.json().catch(() => ({}))
+          throw new Error(errJson.error?.message || `Erreur ${resumeRes.status}`)
+        }
+      } else {
+        // ⏸︎ Mettre en pause en transférant avec play: false
+        const transferUrl = `${API_BASE}/me/player`
+        const res = await fetch(transferUrl, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            device_ids: [deviceId],
+            play: false,
+          }),
+        })
+        if (![204, 202].includes(res.status)) {
+          const errJson = await res.json().catch(() => ({}))
+          throw new Error(errJson.error?.message || `Erreur ${res.status}`)
+        }
+      }
+    } 
+    finally {
+      await fetchState()
     }
-    fetchState()
   }
 
   return { state, togglePlayPause }

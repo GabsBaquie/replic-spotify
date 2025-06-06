@@ -1,17 +1,15 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, Image, FlatList } from 'react-native';
+import { StyleSheet, TextInput, Image, TouchableOpacity } from 'react-native';
 import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from '@/components/RestyleButton';
 import searchContent from '@/query/search/searchContent';
-import { TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-const SearchPage = () => {
+const Search = () => {
     const [loading, setLoading] = useState(false);
     const [searchResult, setSearchResult] = useState<any>(null);
     const [query, setQuery] = useState('');
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const handleSearch = async () => {
         setLoading(true);
@@ -78,10 +76,10 @@ const SearchPage = () => {
                         }
 
                         let path = '';
-                        if (type === 'track') path = '/track/[id]';
-                        else if (type === 'album') path = '/album/[id]';
-                        else if (type === 'artist') path = '/artist/[id]';
-                        else if (type === 'playlist') path = '/playlist/[id]';
+                        if (type === 'track') path = '/(tabs)/search/track/[id]';
+                        else if (type === 'album') path = '/(tabs)/search/album/[id]';
+                        else if (type === 'artist') path = '/(tabs)/search/artist/[id]';
+                        else if (type === 'playlist') path = '/(tabs)/search/playlist/[id]';
 
                         return (
 
@@ -173,4 +171,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default SearchPage;
+export default Search;

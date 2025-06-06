@@ -1,35 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Text } from '@/components/restyle';
 import { View, Image, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { getArtistDetails, getTopTracksByArtist } from '@/query/artist/Artist';
 import TrackPlayer from '@/components/player/TrackPlayer';
+import { useQuery } from '@tanstack/react-query';
 
-export default function ArtistPage() {
-  const { artistId } = useLocalSearchParams<{ artistId: string }>();
-  const [artistDetails, setArtistDetails] = useState<any>(null);
-  const [tracks, setTracks] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+export default function ArtistScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [selectedTrackUrl, setSelectedTrackUrl] = useState<string | null>(null);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!artistId) return;
+  const { data: artistDetails, isLoading: isLoadingArtist } = useQuery({
+    queryKey: ['artist', id],
+    queryFn: () => getArtistDetails(id),
+  });
 
-    setLoading(true);
-    Promise.all([getArtistDetails(artistId), getTopTracksByArtist(artistId)])
-      .then(([details, topTracks]) => {
-        setArtistDetails(details);
-        setTracks(topTracks);
-      })
-      .catch(() => {
-        setArtistDetails(null);
-        setTracks([]);
-      })
-      .finally(() => setLoading(false));
-  }, [artistId]);
+  const { data: tracks, isLoading: isLoadingTracks } = useQuery({
+    queryKey: ['tracks', id],
+    queryFn: () => getTopTracksByArtist(id),
+  });
 
-  if (loading) {
+  const isLoading = isLoadingArtist || isLoadingTracks;
+
+  if (isLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />

@@ -44,7 +44,7 @@ export default function TopArtists() {
         data={artists}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => router.push(`/artist/${item.id}`)}>
+          <TouchableOpacity onPress={() => router.push(`/home/artist/${item.id}`)}>
             <Box style={styles.item}>
               {item.images[0] && (
                 <Image source={{ uri: item.images[0].url }} style={styles.image} />

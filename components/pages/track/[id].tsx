@@ -2,14 +2,42 @@ import { Box, Text } from '@/components/restyle';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import useSpotifyPlayer from '@/hooks/useSpotifyPlayer'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLocalDeviceId } from '@/query/player/getLocalDeviceId';
+
+const API_BASE = 'https://api.spotify.com/v1';
 
 export default function TrackScreen() {
   const { item } = useLocalSearchParams();
   const data = JSON.parse(item as string);
-  const [playButtonImage, setPlayButtonImage] = useState(require('@/assets/images/icons/play.png'));
-  const [downloadImage, setDownloadImage] = useState(require('@/assets/images/icons/download_off.png'));
   const [likeImage, setLikeImage] = useState(require('@/assets/images/icons/like_off.png'));
   const [modalVisible, setModalVisible] = useState(false);
+  const [downloadImage, setDownloadImage] = useState(require('@/assets/images/icons/download_off.png'));
+
+  const { state, togglePlayPause } = useSpotifyPlayer();
+  const { isPaused } = state || { isPaused: false };
+
+  const handlePlayPause = async () => {
+    if (!state) return;
+    try {
+      if (state.isPaused) {
+        const token = await AsyncStorage.getItem('spotify_access_token');
+        if (!token) throw new Error('Token manquant');
+        const deviceId = await getLocalDeviceId();
+        if (!deviceId) throw new Error('Pas d’appareil Spotify');
+        await fetch(`${API_BASE}/me/player/play?device_id=${deviceId}`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context_uri: `spotify:album:${data.album.id}` }),
+        });
+      } else {
+        togglePlayPause();
+      }
+    } catch (e) {
+      console.error('Erreur play album :', e);
+    }
+  };
 
   return (
     <Box style={styles.container}>
@@ -94,7 +122,7 @@ export default function TrackScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity style={{ flexDirection: 'row', gap:10 }} onPress={() => {
                   router.push({
-                    pathname: '/album/[id]',
+                    pathname: '/(tabs)/search/album/[id]',
                     params: {
                       id: data.album.id,
                       item: JSON.stringify(data.album),
@@ -158,7 +186,7 @@ export default function TrackScreen() {
               <TouchableOpacity
                 onPress={() => {
                   router.push({
-                    pathname: '/artist/[id]',
+                    pathname: '/home/artist/[id]',
                     params: {
                       id: data.artists[0].id,
                       item: JSON.stringify(data.artists[0]),
@@ -184,7 +212,7 @@ export default function TrackScreen() {
               <TouchableOpacity
                 onPress={() => {
                   router.push({
-                    pathname: '/album/[id]',
+                    pathname: '/(tabs)/search/album/[id]',
                     params: {
                       id: data.album.id,
                       item: JSON.stringify(data.album),
@@ -234,16 +262,12 @@ export default function TrackScreen() {
             </Box>
           </Box>
           <Box>
-            <TouchableOpacity style={styles.play_button} onPress={() => { 
-              setPlayButtonImage((prev: import('react-native').ImageSourcePropType) => {
-                return prev === require('@/assets/images/icons/play.png')
-                  ? require('@/assets/images/icons/pause.png')
-                  : require('@/assets/images/icons/play.png');
-              });
-            }}>
+            <TouchableOpacity style={styles.play_button} onPress={handlePlayPause}>
               <Image
-                source={playButtonImage}
-                style={{ width: 20, height: 20}}
+                source={isPaused
+                  ? require('@/assets/images/icons/play.png')
+                  : require('@/assets/images/icons/pause.png')}
+                style={{ width: 20, height: 20 }}
                 resizeMode="contain"
               />
             </TouchableOpacity>

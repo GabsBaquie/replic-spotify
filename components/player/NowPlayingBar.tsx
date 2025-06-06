@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import DetailPlay, { TrackInfo } from '@/components/player/DetailPlay';
 import {
   View,
   Text,
@@ -6,6 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ColorValue,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useSpotifyPlayer from '@/hooks/useSpotifyPlayer';
@@ -18,6 +20,8 @@ export default function NowPlayingBar({
   backgroundColor = '#121212',
 }: NowPlayingBarProps) {
   const insets = useSafeAreaInsets();
+  const [modalVisible, setModalVisible] = useState(false);
+
   const { state, togglePlayPause } = useSpotifyPlayer();
 
   if (!state) return null;
@@ -38,52 +42,60 @@ export default function NowPlayingBar({
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor,
-          paddingBottom: insets.bottom || 0,
-        },
-      ]}
-    >
-      {/* Pochette + Titre/Artiste */}
-      <View style={styles.trackInfoContainer}>
-        {albumArtUri ? (
-          <Image source={{ uri: albumArtUri }} style={styles.albumArt} />
-        ) : (
-          <View style={[styles.albumArt, styles.albumArtPlaceholder]} />
-        )}
-        <View style={styles.textContainer}>
-          <Text style={styles.trackName} numberOfLines={1}>
-            {trackName}
-          </Text>
-          <Text style={styles.artistName} numberOfLines={1}>
-            {artistNames}
-          </Text>
-        </View>
-      </View>
-
-      {/* Play / Pause */}
-      <TouchableOpacity onPress={togglePlayPause} style={styles.playPauseButton}>
-        <Text style={styles.playPauseIcon}>{isPaused ? '▶︎' : '⏸︎'}</Text>
-      </TouchableOpacity>
-
-      {/* Barre de progression sans "bulle" */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBackground} />
+    <>
+      <Pressable onPress={() => setModalVisible(true)}>
         <View
           style={[
-            styles.progressFill,
-            { width: `${Math.floor(progressFraction * 100)}%` },
+            styles.container,
+            { backgroundColor, paddingBottom: insets.bottom || 0 },
           ]}
-        />
-        <View style={styles.timeLabels}>
-          <Text style={styles.timeText}>{formatMsToMMSS(playbackPosition)}</Text>
-          <Text style={styles.timeText}>{formatMsToMMSS(trackDuration)}</Text>
+        >
+          {/* Pochette + Titre/Artiste */}
+          <View style={styles.trackInfoContainer}>
+            {albumArtUri ? (
+              <TouchableOpacity onPress={() => setModalVisible(true)}>
+                <Image source={{ uri: albumArtUri }} style={styles.albumArt} />
+              </TouchableOpacity>
+            ) : (
+              <View style={[styles.albumArt, styles.albumArtPlaceholder]} />
+            )}
+            <View style={styles.textContainer}>
+              <Text style={styles.trackName} numberOfLines={1}>
+                {trackName}
+              </Text>
+              <Text style={styles.artistName} numberOfLines={1}>
+                {artistNames}
+              </Text>
+            </View>
+          </View>
+
+          {/* Play / Pause */}
+          <TouchableOpacity onPress={togglePlayPause} style={styles.playPauseButton}>
+            <Text style={styles.playPauseIcon}>{isPaused ? '▶︎' : '⏸︎'}</Text>
+          </TouchableOpacity>
+
+          {/* Barre de progression sans "bulle" */}
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBackground} />
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${Math.floor(progressFraction * 100)}%` },
+              ]}
+            />
+            <View style={styles.timeLabels}>
+              <Text style={styles.timeText}>{formatMsToMMSS(playbackPosition)}</Text>
+              <Text style={styles.timeText}>{formatMsToMMSS(trackDuration)}</Text>
+            </View>
+          </View>
         </View>
-      </View>
-    </View>
+      </Pressable>
+      <DetailPlay
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        track={track as TrackInfo}
+      />
+    </>
   );
 }
 
@@ -151,11 +163,11 @@ const styles = StyleSheet.create({
       height: 4,
       backgroundColor: '#404040',
       borderRadius: 2,
-      marginHorizontal: 5,
+      paddingHorizontal: 5,
     },
     progressFill: {
       position: 'absolute',
-      left: 4,
+      left: 0,
       height: 4,
       backgroundColor: '#1DB954',
       borderRadius: 2,
