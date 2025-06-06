@@ -47,6 +47,7 @@ export default function PlayPauseButton() {
     } else {
       // start playback for this URI
       if (!targetUri) return
+      // build request body: tracks play via URIs, contexts play via context_uri
       const body: any = segments.includes('track')
         ? { uris: [targetUri] }
         : { context_uri: targetUri }

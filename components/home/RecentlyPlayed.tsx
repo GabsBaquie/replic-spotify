@@ -4,7 +4,7 @@ import useRecentlyPlayed from '@/hooks/useRecentlyPlayed';
 import { Box, Text } from '@/components/restyle';
 
 export default function RecentlyPlayed() {
-  const { tracks, loading } = useRecentlyPlayed(10);
+  const { tracks, loading } = useRecentlyPlayed(20);
   const router = useRouter();
 
   if (loading) {
@@ -19,10 +19,11 @@ export default function RecentlyPlayed() {
   return (
     <Box style={styles.container}>
         
-      <Text>Recently Played</Text>
+      <Text style={{marginBottom: 10}}>Recently Played</Text>
 
       <FlatList
         horizontal
+        showsHorizontalScrollIndicator={false}
         data={tracks}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -52,8 +53,8 @@ export default function RecentlyPlayed() {
 
 const styles = StyleSheet.create({
   center: { flex: 2, justifyContent: 'center', alignItems: 'center' },
-  container: { marginTop: 20, maxHeight: 150 },
+  container: { marginTop: 20 },
   item: { flexDirection: 'column', alignItems: 'center', marginRight: 12 },
-  image: { width: 80, height: 80, borderRadius: 4 },
-  title: { fontSize: 16, fontWeight: '600', textAlign: 'center', width: 80 },
+  image: { width: 120, height: 120, borderRadius: 4 },
+  title: { fontSize: 16, fontWeight: '600', textAlign: 'center', width: 120 },
 }); 

@@ -18,10 +18,11 @@ export default function TopArtists() {
 
   return (
     <Box style={styles.container}>
-      <Text>Top Artists</Text>
+      <Text style={{marginBottom: 10}}>Top Artists</Text>
 
       <FlatList
         horizontal
+        showsHorizontalScrollIndicator={false}
         data={artists}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -30,7 +31,7 @@ export default function TopArtists() {
               {item.images[0] && (
                 <Image source={{ uri: item.images[0].url }} style={styles.image} />
               )}
-              <Text>{item.name}</Text>
+              <Text numberOfLines={2} style={styles.title}>{item.name}</Text>
             </Box>
           </TouchableOpacity>
         )}
@@ -41,8 +42,8 @@ export default function TopArtists() {
 
 const styles = StyleSheet.create({
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    container: { marginTop: 20, maxHeight: 150 },
+    container: { marginTop: 20 },
     item: { flexDirection: 'column',  display: 'flex'},
-    image: { width: 100, height: 100, marginRight: 10 },
-    name: { fontSize: 16, color: 'white' },
+    image: { width: 120, height: 120, marginRight: 10 },
+    title: { fontSize: 16, fontWeight: '600', textAlign: 'center', width: 120 },
   });
