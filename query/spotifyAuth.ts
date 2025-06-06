@@ -1,8 +1,5 @@
 import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
 import { exchangeCodeAsync, TokenResponse } from 'expo-auth-session';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const discovery = {
   authorizationEndpoint: 'https://accounts.spotify.com/authorize',
@@ -10,7 +7,17 @@ const discovery = {
 };
 
 const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID as string;
-const scopes = ['user-read-email', 'playlist-read-private', 'user-read-private', 'user-read-recently-played', 'user-top-read'];
+const scopes = [
+  'user-read-email',
+  'playlist-read-private',
+  'user-read-private',
+  'user-read-recently-played',
+  'user-top-read',
+  'streaming',
+  'user-read-playback-state',
+  'user-modify-playback-state',
+];;
+
 const redirectUri = process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI as string;
 
 export function useSpotifyAuth() {

@@ -1,5 +1,4 @@
-import { Redirect } from 'expo-router';
-import { Slot, useSegments } from 'expo-router';
+import { Redirect, Slot, useSegments } from 'expo-router';
 
 export default function HomeScreen() {
   const isOnboarding = true;

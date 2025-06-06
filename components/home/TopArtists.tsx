@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Image, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import getTopArtists from '@/query/profile/topArtists';
 import { Box, Text } from '@/components/restyle';
 
@@ -13,11 +14,12 @@ type Artist = {
 export default function TopArtists() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     getTopArtists(10)
       .then(data => {
-        console.log('Top artists fetched:', data);
+        // console.log('Top artists fetched:', data);
         setArtists(data);
       })
       .catch((err: any) => console.error(err))
@@ -42,14 +44,16 @@ export default function TopArtists() {
         data={artists}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-        <Box style={styles.item}>
-          {item.images[0] && (
-            <Image source={{ uri: item.images[0].url }} style={styles.image} />
-          )}
-          <Text>{item.name}</Text>
-        </Box>
-      )}
-    />
+          <TouchableOpacity onPress={() => router.push(`/artist/${item.id}`)}>
+            <Box style={styles.item}>
+              {item.images[0] && (
+                <Image source={{ uri: item.images[0].url }} style={styles.image} />
+              )}
+              <Text>{item.name}</Text>
+            </Box>
+          </TouchableOpacity>
+        )}
+      />
     </Box>
   );
 }
