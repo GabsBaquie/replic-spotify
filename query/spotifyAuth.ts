@@ -1,24 +1,25 @@
-import * as AuthSession from 'expo-auth-session';
-import { exchangeCodeAsync, TokenResponse } from 'expo-auth-session';
+import * as AuthSession from "expo-auth-session";
+import { exchangeCodeAsync, TokenResponse } from "expo-auth-session";
 
 const discovery = {
-  authorizationEndpoint: 'https://accounts.spotify.com/authorize',
-  tokenEndpoint: 'https://accounts.spotify.com/api/token',
+  authorizationEndpoint: "https://accounts.spotify.com/authorize",
+  tokenEndpoint: "https://accounts.spotify.com/api/token",
 };
 
 const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID as string;
 
 const scopes = [
-  'user-read-email',
-  'playlist-read-private',
-  'user-read-private',
-  'user-read-recently-played',
-  'user-top-read',
-  'streaming',
-  'user-read-playback-state',
-  'user-modify-playback-state',
+  "user-read-email",
+  "playlist-read-private",
+  "user-read-private",
+  "user-read-recently-played",
+  "user-top-read",
+  "streaming",
+  "user-read-playback-state",
+  "user-modify-playback-state",
+  "user-library-read",
+  "user-follow-read",
 ];
-
 
 const redirectUri = process.env.EXPO_PUBLIC_SPOTIFY_REDIRECT_URI as string;
 
@@ -28,7 +29,7 @@ export function useSpotifyAuth() {
       clientId,
       scopes,
       redirectUri,
-      responseType: 'code',
+      responseType: "code",
       usePKCE: true,
     },
     discovery
@@ -36,8 +37,8 @@ export function useSpotifyAuth() {
 
   // Échange du code contre un token
   const getAccessToken = async () => {
-    if (response?.type !== 'success' || !response.params.code) return null;
-  
+    if (response?.type !== "success" || !response.params.code) return null;
+
     try {
       const tokenResult: TokenResponse = await exchangeCodeAsync(
         {
@@ -45,7 +46,7 @@ export function useSpotifyAuth() {
           clientId,
           redirectUri,
           extraParams: {
-            code_verifier: request?.codeVerifier ?? '',
+            code_verifier: request?.codeVerifier ?? "",
           },
         },
         discovery
@@ -54,9 +55,8 @@ export function useSpotifyAuth() {
       // console.log('Token obtenu avec succès.', tokenResult);
 
       return tokenResult;
-
     } catch (err) {
-      console.error('Token exchange failed:', err);
+      console.error("Token exchange failed:", err);
       return null;
     }
   };

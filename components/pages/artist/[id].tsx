@@ -1,15 +1,37 @@
-import React, { useState } from 'react'
-import useArtist from '@/hooks/useArtist'
-import { Box, Text } from '@/components/restyle';
-import { View, Image, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import PlayPauseButton from '@/components/ui/PlayPauseButton';
+import React, { useCallback } from "react";
+import useArtist from "@/hooks/useArtist";
+import { Box } from "@/components/restyle";
+import {
+  View,
+  Image,
+  FlatList,
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import PlayPauseButton from "@/components/ui/PlayPauseButton";
+import { LibraryHero } from "@/components/ui/LibraryHero";
+import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
+import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
+import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
 
 export default function ArtistScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
-  const { artist: artistDetails, tracks, loading } = useArtist(id)
-  const [selectedTrackUrl, setSelectedTrackUrl] = useState<string | null>(null);
-  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { artist: artistDetails, tracks, loading } = useArtist(id);
+
+  const handlePlay = useCallback(async (trackId: string) => {
+    try {
+      const deviceId = await getLocalDeviceId();
+      await playSpotifyTrack(trackId, deviceId ?? undefined);
+    } catch (error: any) {
+      Alert.alert(
+        "Lecture impossible",
+        error?.message ?? "Réessaie plus tard."
+      );
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -22,54 +44,74 @@ export default function ArtistScreen() {
   if (!artistDetails) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Unable to load artist details.</Text>
+        <Image
+          source={require("@/assets/images/icons/artist.png")}
+          style={styles.placeholderIcon}
+        />
       </View>
     );
   }
 
-  const renderItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      onPress={() => {
-        setSelectedTrackUrl(item.preview_url);
-        setSelectedTrackId(item.id);
-      }}
-      style={styles.trackItem}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-        <Image
-          source={{ uri: item.album.images[0]?.url || 'https://via.placeholder.com/150' }}
-          style={{ width: 50, height: 50, borderRadius: 8, marginTop: 8 }}
-        />
-        <Text style={styles.trackName}>{item.name}</Text>
-      </View>
-      <TouchableOpacity onPress={() => {}}>
-        <Image
-          source={require('@/assets/images/icons/more.png')}
-          style={{ width: 20, height: 20 }}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
-
   return (
     <Box style={styles.container}>
-      {artistDetails.images && artistDetails.images.length > 0 && (
-        <Image source={{ uri: artistDetails.images[0].url }} style={styles.artistImage} />
-      )}
+      <LibraryHero
+        cover={
+          <Image
+            source={{
+              uri:
+                artistDetails.images?.[0]?.url ||
+                "https://via.placeholder.com/300",
+            }}
+            style={styles.heroCover}
+          />
+        }
+        title={artistDetails.name}
+        subtitle={
+          artistDetails.followers
+            ? `${artistDetails.followers.total.toLocaleString()} followers`
+            : undefined
+        }
+        metadata={artistDetails.genres?.slice(0, 2)}
+        actions={
+          <>
+            <TouchableOpacity>
+              <Image
+                source={require("@/assets/images/icons/like_off.png")}
+                style={styles.actionIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Image
+                source={require("@/assets/images/icons/more.png")}
+                style={styles.actionIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </>
+        }
+        rightSlot={<PlayPauseButton />}
+      />
 
-      <Box flexDirection="row" alignItems="center" justifyContent="space-between" width="100%">
-        <Text style={styles.artistName}>{artistDetails.name}</Text>
-        <PlayPauseButton />
-      </Box>
-      
-      <Text style={styles.heading}>Top Tracks</Text>
-      
-      <FlatList 
+      <FlatList
         data={tracks}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        style={styles.trackList}
+        renderItem={({ item }) => (
+          <LibraryTrackRow
+            title={item.name}
+            subtitle={item.album?.name}
+            imageUri={item.album?.images?.[0]?.url}
+            onPress={() => handlePlay(item.id)}
+            rightElement={
+              <Image
+                source={require("@/assets/images/icons/more.png")}
+                style={styles.rowIcon}
+                resizeMode="contain"
+              />
+            }
+          />
+        )}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </Box>
   );
@@ -78,45 +120,34 @@ export default function ArtistScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 60,
+    paddingBottom: 150,
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  artistImage: {
-    width: '100%',
-    height: 300,
-    borderRadius: 8,
-    marginBottom: 16,
+  placeholderIcon: {
+    width: 48,
+    height: 48,
+    tintColor: "#555",
   },
-  artistName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 16,
+  heroCover: {
+    width: 225,
+    height: 225,
+    borderRadius: 16,
   },
-  heading: {
-    fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 12,
+  actionIcon: {
+    width: 20,
+    height: 20,
   },
-  trackList: {
-    flexGrow: 0,
-    marginBottom: 16,
+  rowIcon: {
+    width: 20,
+    height: 20,
   },
-  trackItem: {
-    paddingVertical: 6,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  trackName: {
-    fontSize: 16,
-    fontWeight: 'semibold',
-  },
-  errorText: {
-    fontSize: 18,
-    color: 'red',
+  separator: {
+    height: 8,
   },
 });

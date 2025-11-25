@@ -1,9 +1,15 @@
-import { TouchableOpacity, View } from 'react-native';
-import { createRestyleComponent, createVariant, spacing, SpacingProps, VariantProps } from '@shopify/restyle';
-import { Theme } from '@/theme/theme';
-import { Box, Text } from '@/components/restyle';
+import { TouchableOpacity, View } from "react-native";
+import {
+  createRestyleComponent,
+  createVariant,
+  spacing,
+  SpacingProps,
+  VariantProps,
+} from "@shopify/restyle";
+import { Theme } from "@/theme/theme";
+import { Box, Text } from "@/components/restyle";
 
-type ButtonVariants = VariantProps<Theme, 'buttonVariants'>;
+type ButtonVariants = VariantProps<Theme, "buttonVariants">;
 type ButtonSpacingProps = SpacingProps<Theme>;
 
 type RestyleButtonProps = ButtonVariants &
@@ -13,18 +19,20 @@ type RestyleButtonProps = ButtonVariants &
     icon?: React.ReactNode;
     disabled?: boolean;
     fullWidth?: boolean;
-    textColor?: keyof Theme['colors']; // Ajout de la prop textColor
+    textColor?: keyof Theme["colors"]; // Ajout de la prop textColor
   };
 
-const BaseButton = createRestyleComponent<ButtonVariants & ButtonSpacingProps & React.ComponentProps<typeof TouchableOpacity>, Theme>([
-  spacing,
-  createVariant({ themeKey: 'buttonVariants' }),
-], TouchableOpacity);
+const BaseButton = createRestyleComponent<
+  ButtonVariants &
+    ButtonSpacingProps &
+    React.ComponentProps<typeof TouchableOpacity>,
+  Theme
+>([spacing, createVariant({ themeKey: "buttonVariants" })], TouchableOpacity);
 
 export function RestyleButton({
   title,
   onPress,
-  variant = 'primary',
+  variant = "primary",
   icon,
   disabled = false,
   fullWidth = false,
@@ -36,22 +44,23 @@ export function RestyleButton({
       variant={variant}
       onPress={onPress}
       disabled={disabled}
-      style={{ 
+      style={{
         opacity: disabled ? 0.5 : 1,
-        width: fullWidth ? '100%' : undefined,
-        flexDirection: 'row',
-        alignItems: 'center', 
-        justifyContent: 'center'
+        width: fullWidth ? "100%" : undefined,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
       }}
-      {...rest}>
-        {icon && <Box marginRight="s">{icon}</Box>}
-        <Text 
-          variant="body" 
-          color={textColor || (variant === 'outline' ? 'text' : 'mainForeground')}
-          style={{ backgroundColor: 'transparent' }}
-        >
-          {title}
-        </Text>
+      {...rest}
+    >
+      {icon && <Box marginRight="s">{icon}</Box>}
+      <Text
+        variant="body"
+        color={textColor || (variant === "outline" ? "text" : "mainForeground")}
+        style={{ backgroundColor: "transparent" }}
+      >
+        {title}
+      </Text>
     </BaseButton>
   );
 }

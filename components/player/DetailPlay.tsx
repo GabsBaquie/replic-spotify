@@ -1,9 +1,18 @@
-import { Modal, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { Box, Text } from '@/components/restyle';
+import {
+  Modal,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  View,
+} from "react-native";
+import { Box, Text } from "@/components/restyle";
+import { useRouter } from "expo-router";
 
 export type TrackInfo = {
   name: string;
   artists: string[];
+  artistIds: string[];
   albumArtUri: string | null;
   uri: string;
 };
@@ -14,66 +23,134 @@ interface DetailPlayProps {
   track: TrackInfo;
 }
 
-export default function DetailPlay({ visible, onClose, track }: DetailPlayProps) {
-  const { name, artists, albumArtUri } = track;
+export default function DetailPlay({
+  visible,
+  onClose,
+  track,
+}: DetailPlayProps) {
+  const { name, artists, artistIds, albumArtUri } = track;
+  const router = useRouter();
+
+  const actions = [
+    {
+      label: "Add to playlist",
+      icon: require("@/assets/images/icons/add_playlist.png"),
+      onPress: () => {},
+    },
+    {
+      label: "Share",
+      icon: require("@/assets/images/icons/share.png"),
+      onPress: () => {},
+    },
+    {
+      label: "View artist",
+      icon: require("@/assets/images/icons/artist.png"),
+      onPress: () => {
+        router.push({
+          pathname: "/home/artist/[id]",
+          params: { id: artistIds[0] },
+        });
+        onClose();
+      },
+    },
+  ];
 
   return (
     <Modal
       animationType="slide"
-      transparent={true}
+      transparent
       visible={visible}
       onRequestClose={onClose}
     >
-      <Box style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' }}>
-        <Box style={{width:'100%', height:'100%', paddingVertical: 75, backgroundColor: '#121212', borderRadius: 10, display: 'flex', alignItems: 'center'}}>
-        <Image source={{ uri: albumArtUri || undefined }} style={{ width: 250, height: 225 }} />
+      <View style={styles.overlay}>
+        <Box style={styles.modal}>
+          <Image
+            source={{ uri: albumArtUri || undefined }}
+            style={styles.cover}
+          />
 
-          <Box style={{width: '100%', display: 'flex', alignItems: 'center'}}>
-            
-            <Box style={{ marginTop: 30, display: 'flex',  alignItems: 'flex-start', justifyContent: 'space-between', width: '50%' }}>
-              <Text>{name} </Text>
-              <Text variant="caption" color="text" opacity={0.5}>
-              {artists[0]}
+          <Box style={styles.header}>
+            <Box>
+              <Text style={styles.title}>{name}</Text>
+              <Text variant="caption" color="text" style={{ opacity: 0.5 }}>
+                {artists[0]}
               </Text>
-              <TouchableOpacity style={{position: 'absolute', right: 0}} onPress={() => {}}>
-                <Image
-                source={require('@/assets/images/icons/like_off.png')}
-                style={{ width: 20, height: 20 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-            
             </Box>
+            <TouchableOpacity>
+              <Image
+                source={require("@/assets/images/icons/like_off.png")}
+                style={styles.icon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
           </Box>
-          <ScrollView style={{ width: '80%' }} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 15, gap: 20, display: 'flex' }} showsVerticalScrollIndicator={false}>
-            <TouchableOpacity style={{ flexDirection: 'row', gap:10 }} onPress={() => {}}>
-              <Image
-                source={require('@/assets/images/icons/add_playlist.png')}
-                style={{ width: 20, height: 20 }}
-                resizeMode="contain"
-              />
-              <Text variant="caption" color="text">
-                Add to playlist
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={{ flexDirection: 'row', gap:10 }} onPress={() => {}}>
-              <Image
-                source={require('@/assets/images/icons/share.png')}
-                style={{ width: 20, height: 20 }}
-                resizeMode="contain"
-              />
-              <Text variant="caption" color="text">
-                Share
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity onPress={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 5, width: '100%' }}>
+
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {actions.map((action) => (
+              <TouchableOpacity
+                key={action.label}
+                style={styles.action}
+                onPress={action.onPress}
+              >
+                <Image
+                  source={action.icon}
+                  style={styles.icon}
+                  resizeMode="contain"
+                />
+                <Text variant="caption" color="text">
+                  {action.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Text>Close</Text>
             </TouchableOpacity>
           </ScrollView>
         </Box>
-      </Box>
+      </View>
     </Modal>
-  )
+  );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modal: {
+    width: "100%",
+    height: "100%",
+    paddingVertical: 75,
+    backgroundColor: "#121212",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  cover: { width: 250, height: 225 },
+  header: {
+    width: "80%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 30,
+  },
+  title: { fontSize: 20, fontWeight: "600", color: "#fff" },
+  scroll: { width: "80%" },
+  scrollContent: { paddingHorizontal: 20, paddingVertical: 15, gap: 20 },
+  action: { flexDirection: "row", gap: 10, alignItems: "center" },
+  icon: { width: 20, height: 20 },
+  closeButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 5,
+    width: "100%",
+    marginTop: 20,
+  },
+});
