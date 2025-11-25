@@ -1,11 +1,32 @@
-import { View, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import useRecentlyPlayed from '@/hooks/useRecentlyPlayed';
-import { Box, Text } from '@/components/restyle';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useCallback } from "react";
+import useRecentlyPlayed from "@/hooks/useRecentlyPlayed";
+import { Box, Text } from "@/components/restyle";
+import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
+import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
 
 export default function RecentlyPlayed() {
   const { tracks, loading } = useRecentlyPlayed(20);
-  const router = useRouter();
+
+  const handlePlay = useCallback(async (trackId: string) => {
+    try {
+      const deviceId = await getLocalDeviceId();
+      await playSpotifyTrack(trackId, deviceId ?? undefined);
+    } catch (error: any) {
+      Alert.alert(
+        "Lecture impossible",
+        error?.message ?? "Réessaie plus tard."
+      );
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -18,23 +39,14 @@ export default function RecentlyPlayed() {
 
   return (
     <Box style={styles.container}>
-        
-      <Text style={{marginBottom: 10}}>Recently Played</Text>
-
+      <Text style={styles.heading}>Recently Played</Text>
       <FlatList
+        data={tracks}
         horizontal
         showsHorizontalScrollIndicator={false}
-        data={tracks}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() =>
-              router.push({
-                pathname: '/(tabs)/search/track/[id]',
-                params: { id: item.id, item: JSON.stringify(item) },
-              })
-            }
-          >
+          <TouchableOpacity onPress={() => handlePlay(item.id)}>
             <Box style={styles.item}>
               {item.album.images[0] && (
                 <Image
@@ -42,7 +54,9 @@ export default function RecentlyPlayed() {
                   style={styles.image}
                 />
               )}
-              <Text style={styles.title} numberOfLines={2}>{item.name}</Text>
+              <Text style={styles.title} numberOfLines={2}>
+                {item.name}
+              </Text>
             </Box>
           </TouchableOpacity>
         )}
@@ -52,9 +66,10 @@ export default function RecentlyPlayed() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 2, justifyContent: 'center', alignItems: 'center' },
+  center: { flex: 2, justifyContent: "center", alignItems: "center" },
   container: { marginTop: 20 },
-  item: { flexDirection: 'column', alignItems: 'center', marginRight: 12 },
+  heading: { marginBottom: 10, fontSize: 18, fontWeight: "600", color: "#fff" },
+  item: { flexDirection: "column", alignItems: "center", marginRight: 12 },
   image: { width: 120, height: 120, borderRadius: 4 },
-  title: { fontSize: 16, fontWeight: '600', textAlign: 'center', width: 120 },
-}); 
+  title: { fontSize: 16, fontWeight: "600", textAlign: "center", width: 120 },
+});

@@ -10,6 +10,7 @@ type LibraryTrackRowProps = {
   onPress?: () => void;
   rightElement?: ReactNode;
   isActive?: boolean;
+  leftAccessory?: ReactNode;
 };
 
 export const LibraryTrackRow = ({
@@ -20,11 +21,14 @@ export const LibraryTrackRow = ({
   onPress,
   rightElement,
   isActive,
+  leftAccessory,
 }: LibraryTrackRowProps) => {
   return (
     <TouchableOpacity onPress={onPress}>
       <Box style={styles.row}>
-        {imageUri ? (
+        {leftAccessory ? (
+          <Box style={styles.accessory}>{leftAccessory}</Box>
+        ) : imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.cover} />
         ) : (
           <Box style={[styles.cover, { backgroundColor: fallbackColor }]} />
@@ -66,6 +70,13 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 8,
+  },
+  accessory: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   info: {
     flex: 1,
