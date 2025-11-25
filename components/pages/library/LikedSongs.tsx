@@ -11,8 +11,8 @@ import { Box, Text } from "@/components/restyle";
 import { getSavedTracks } from "@/query/library/getSavedTracks";
 import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
 import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
-import { LibraryHero } from "@/components/library/LibraryHero";
-import { LibraryTrackRow } from "@/components/library/LibraryTrackRow";
+import { LibraryHero } from "@/components/ui/LibraryHero";
+import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
 
 type SavedTrack = {
   id: string;
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     fontSize: 72,
   },
   list: {
-    paddingBottom: 200,
+    paddingBottom: 150,
   },
   loadingContainer: {
     flex: 1,

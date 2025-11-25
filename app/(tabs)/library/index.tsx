@@ -1,9 +1,9 @@
 import { useMemo, useState, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { Box, Text } from "@/components/restyle";
-import { LibraryHeader } from "@/components/library/LibraryHeader";
-import { LibraryFilterTabs } from "@/components/library/LibraryFilterTabs";
-import { LibraryList } from "@/components/library/LibraryList";
+import { LibraryHeader } from "@/components/ui/LibraryHeader";
+import { LibraryFilterTabs } from "@/components/ui/LibraryFilterTabs";
+import { LibraryList } from "@/components/ui/LibraryList";
 import { useProfile } from "@/hooks/useProfile";
 import {
   LibraryFilter,

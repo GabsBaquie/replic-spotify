@@ -12,8 +12,8 @@ import {
 import { fetchPlaylistTracks } from "@/query/search/playlistTracks";
 import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
 import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
-import { LibraryHero } from "@/components/library/LibraryHero";
-import { LibraryTrackRow } from "@/components/library/LibraryTrackRow";
+import { LibraryHero } from "@/components/ui/LibraryHero";
+import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
 
 export default function PlaylistScreen() {
   const { item } = useLocalSearchParams();

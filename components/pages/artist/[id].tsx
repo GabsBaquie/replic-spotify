@@ -12,8 +12,8 @@ import {
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import PlayPauseButton from "@/components/ui/PlayPauseButton";
-import { LibraryHero } from "@/components/library/LibraryHero";
-import { LibraryTrackRow } from "@/components/library/LibraryTrackRow";
+import { LibraryHero } from "@/components/ui/LibraryHero";
+import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
 import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
 import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
 
@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingVertical: 60,
+    paddingBottom: 150,
   },
   centered: {
     flex: 1,

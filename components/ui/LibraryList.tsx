@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingVertical: 16,
-    paddingBottom: 200,
+    paddingBottom: 150,
     gap: 12,
   },
   item: {

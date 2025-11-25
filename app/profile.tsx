@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Image, StyleSheet, View, Text, ActivityIndicator } from 'react-native';
-import getProfile from '@/query/profile/getProfile';
+import { useEffect, useState } from "react";
+import { Image, StyleSheet, View, Text, ActivityIndicator } from "react-native";
+import getProfile from "@/query/profile/getProfile";
 
 export default function Home() {
   const [profile, setProfile] = useState<any>(null);
@@ -9,8 +9,8 @@ export default function Home() {
 
   useEffect(() => {
     getProfile()
-      .then(data => setProfile(data))
-      .catch(err => setError(err.message))
+      .then((data) => setProfile(data))
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -31,22 +31,27 @@ export default function Home() {
   }
 
   return (
-    <View style={styles.container}>
-      {profile.images?.[0]?.url && (
-        <Image source={{ uri: profile.images[0].url }} style={styles.avatar} />
-      )}
-      <Text style={styles.name}>{profile.display_name}</Text>
-      <Text style={styles.email}>{profile.email}</Text>
-    </View>
+    <>
+      <View style={styles.container}>
+        {profile.images?.[0]?.url && (
+          <Image
+            source={{ uri: profile.images[0].url }}
+            style={styles.avatar}
+          />
+        )}
+        <Text style={styles.name}>{profile.display_name}</Text>
+        <Text style={styles.email}>{profile.email}</Text>
+      </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#121212',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#121212",
   },
   avatar: {
     width: 120,
@@ -55,14 +60,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   name: {
-    color: 'white',
+    color: "white",
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   email: {
-    color: 'gray',
+    color: "gray",
     fontSize: 16,
     marginTop: 8,
   },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

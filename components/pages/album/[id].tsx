@@ -1,7 +1,7 @@
 import { Box } from "@/components/restyle";
 import PlayPauseButton from "@/components/ui/PlayPauseButton";
-import { LibraryHero } from "@/components/library/LibraryHero";
-import { LibraryTrackRow } from "@/components/library/LibraryTrackRow";
+import { LibraryHero } from "@/components/ui/LibraryHero";
+import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
 import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 import {
