@@ -1,6 +1,5 @@
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   StyleSheet,
@@ -14,6 +13,7 @@ import { useRouter } from "expo-router";
 import { Box, Text } from "@/components/restyle";
 import type { Profile } from "@/hooks/useProfile";
 import { RestyleButton } from "@/components/RestyleButton";
+import { useLogout } from "@/hooks/useLogout";
 
 type MyProfileProps = {
   isVisible: boolean;
@@ -33,6 +33,7 @@ export const MyProfile = ({
   const avatarUri = profile?.images?.[0]?.url;
   const router = useRouter();
   const [isCreator, setIsCreator] = useState(false);
+  const logout = useLogout();
 
   useEffect(() => {
     AsyncStorage.getItem("user_is_creator")
@@ -40,26 +41,8 @@ export const MyProfile = ({
       .catch(() => {});
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await AsyncStorage.multiRemove([
-        "spotify_access_token",
-        "spotify_refresh_token",
-      ]);
-      router.replace("/");
-    } catch (err: any) {
-      Alert.alert("Impossible de se déconnecter", err?.message ?? "");
-    }
-  }, [router]);
-
-  const linkArtist = useCallback(async () => {
-    try {
-      await AsyncStorage.setItem("user_is_creator", "true");
-      setIsCreator(true);
-      router.push("/creator");
-    } catch (err: any) {
-      Alert.alert("Impossible de mettre à jour le statut", err?.message ?? "");
-    }
+  const startCreatorFlow = useCallback(() => {
+    router.push("/creator");
   }, [router]);
 
   const goToCreator = useCallback(() => {
@@ -126,7 +109,7 @@ export const MyProfile = ({
                 title={
                   isCreator ? "Aller à l’espace creator" : "Devenir creator"
                 }
-                onPress={isCreator ? goToCreator : linkArtist}
+                onPress={isCreator ? goToCreator : startCreatorFlow}
                 marginHorizontal="l"
                 marginTop="s"
               />
