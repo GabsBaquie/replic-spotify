@@ -41,13 +41,20 @@ export const MyProfile = ({
       .catch(() => {});
   }, []);
 
-  const startCreatorFlow = useCallback(() => {
+  const handleStartCreator = useCallback(() => {
+    onClose();
     router.push("/creator");
-  }, [router]);
+  }, [router, onClose]);
 
-  const goToCreator = useCallback(() => {
-    router.push("/creator");
-  }, [router]);
+  const handleGoToCreator = useCallback(() => {
+    onClose();
+    router.push("/creator/home");
+  }, [router, onClose]);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    onClose();
+  }, [logout, onClose]);
 
   return (
     <Modal
@@ -109,14 +116,14 @@ export const MyProfile = ({
                 title={
                   isCreator ? "Aller à l’espace creator" : "Devenir creator"
                 }
-                onPress={isCreator ? goToCreator : startCreatorFlow}
+                onPress={isCreator ? handleGoToCreator : handleStartCreator}
                 marginHorizontal="l"
                 marginTop="s"
               />
 
               <RestyleButton
                 title="Logout"
-                onPress={logout}
+                onPress={handleLogout}
                 marginHorizontal="l"
                 marginTop="m"
                 variant="outline"

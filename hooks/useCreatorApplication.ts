@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 
 const CREATOR_FLAG_KEY = "user_is_creator";
+const CREATOR_PROFILE_KEY = "creator_profile";
 
 export const useCreatorApplication = () => {
   const [stageName, setStageName] = useState("");
@@ -50,12 +51,15 @@ export const useCreatorApplication = () => {
     setLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1200));
-      await AsyncStorage.setItem(CREATOR_FLAG_KEY, "true");
+      await AsyncStorage.multiSet([
+        [CREATOR_FLAG_KEY, "true"],
+        [CREATOR_PROFILE_KEY, JSON.stringify({ stageName, bio, photoUri })],
+      ]);
       Alert.alert(
         "Créateur enregistré",
         "Ton dossier artiste a bien été envoyé."
       );
-      router.replace("/(tabs)/home");
+      router.replace("/creator/home");
       reset();
     } catch (error: any) {
       Alert.alert(
