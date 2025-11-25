@@ -15,10 +15,11 @@ type LibraryListProps = {
   isLoading: boolean;
   error?: string;
   onRetry: () => void;
+  onSelectItem?: (item: LibraryItem) => void;
 };
 
 export const LibraryList = memo(
-  ({ items, isLoading, error, onRetry }: LibraryListProps) => {
+  ({ items, isLoading, error, onRetry, onSelectItem }: LibraryListProps) => {
     if (isLoading) {
       return (
         <View style={styles.stateContainer}>
@@ -52,7 +53,9 @@ export const LibraryList = memo(
         keyExtractor={(item) => item.id}
         style={styles.flatList}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => <LibraryListItem item={item} />}
+        renderItem={({ item }) => (
+          <LibraryListItem item={item} onPress={onSelectItem} />
+        )}
         showsVerticalScrollIndicator={false}
       />
     );
@@ -63,10 +66,11 @@ LibraryList.displayName = "LibraryList";
 
 type LibraryListItemProps = {
   item: LibraryItem;
+  onPress?: (item: LibraryItem) => void;
 };
 
-const LibraryListItem = ({ item }: LibraryListItemProps) => (
-  <TouchableOpacity>
+const LibraryListItem = ({ item, onPress }: LibraryListItemProps) => (
+  <TouchableOpacity onPress={() => onPress?.(item)}>
     <Box style={styles.item}>
       {item.image ? (
         <Image source={{ uri: item.image }} style={styles.cover} />

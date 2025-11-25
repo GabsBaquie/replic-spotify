@@ -1,55 +1,56 @@
-import { Box } from "@/components/restyle";
-import { useLocalSearchParams } from "expo-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
   Image,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
-  Alert,
-  ActivityIndicator,
 } from "react-native";
-import { fetchPlaylistTracks } from "@/query/search/playlistTracks";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
+import { Box, Text } from "@/components/restyle";
+import { getSavedTracks } from "@/query/library/getSavedTracks";
 import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
+import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
 import { LibraryHero } from "@/components/library/LibraryHero";
 import { LibraryTrackRow } from "@/components/library/LibraryTrackRow";
 
-export default function PlaylistScreen() {
-  const { item } = useLocalSearchParams();
-  const data = JSON.parse(item as string);
-  const [playButtonImage, setPlayButtonImage] = useState(
-    require("@/assets/images/icons/play.png")
-  );
+type SavedTrack = {
+  id: string;
+  name: string;
+  artists: { name: string }[];
+  album: { images?: { url: string }[] };
+};
+
+export const LikedSongs = () => {
+  const [tracks, setTracks] = useState<SavedTrack[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [playingId, setPlayingId] = useState<string | null>(null);
   const [downloadImage, setDownloadImage] = useState(
     require("@/assets/images/icons/download_off.png")
   );
   const [likeImage, setLikeImage] = useState(
-    require("@/assets/images/icons/like_off.png")
+    require("@/assets/images/icons/like_on.png")
   );
-  const [loading, setLoading] = useState(true);
-  const [tracks, setTracks] = useState<any[]>([]);
-  const [isLaunchingId, setIsLaunchingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTracks = async () => {
-      setLoading(true);
+    const fetchLikedTracks = async () => {
+      setIsLoading(true);
       try {
-        const trackData = await fetchPlaylistTracks(data.id);
-        setTracks(trackData.items);
-        setLoading(false);
+        const response = await getSavedTracks(50);
+        setTracks(response.items ?? []);
       } catch (error) {
-        console.error("Error fetching album tracks:", error);
-        setLoading(false);
+        console.error("Failed to load liked songs", error);
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchTracks();
-  }, [data.id]);
 
-  const handlePlayTrack = async (trackId?: string) => {
-    if (!trackId) return;
+    fetchLikedTracks();
+  }, []);
+
+  const handlePlayTrack = async (trackId: string) => {
     try {
-      setIsLaunchingId(trackId);
+      setPlayingId(trackId);
       const deviceId = await getLocalDeviceId();
       await playSpotifyTrack(trackId, deviceId ?? undefined);
     } catch (error: any) {
@@ -58,11 +59,11 @@ export default function PlaylistScreen() {
         error?.message ?? "Réessaie plus tard."
       );
     } finally {
-      setIsLaunchingId(null);
+      setPlayingId(null);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Box style={styles.loadingContainer}>
         <ActivityIndicator color="#fff" />
@@ -74,24 +75,21 @@ export default function PlaylistScreen() {
     <Box style={styles.container}>
       <LibraryHero
         cover={
-          <Image
-            source={{ uri: data.images[0]?.url }}
-            style={styles.heroCover}
-          />
+          <Box style={styles.cover}>
+            <Text style={styles.coverIcon}>♥</Text>
+          </Box>
         }
-        title={data.name}
-        subtitle={data.owner?.display_name}
-        metadata={["Playlist"]}
+        title="Liked Songs"
+        subtitle={`${tracks.length} titres aimés`}
         actions={
           <>
             <TouchableOpacity
               onPress={() => {
                 setLikeImage(
                   (prev: import("react-native").ImageSourcePropType) => {
-                    return prev ===
-                      require("@/assets/images/icons/like_off.png")
-                      ? require("@/assets/images/icons/like_on.png")
-                      : require("@/assets/images/icons/like_off.png");
+                    return prev === require("@/assets/images/icons/like_on.png")
+                      ? require("@/assets/images/icons/like_off.png")
+                      : require("@/assets/images/icons/like_on.png");
                   }
                 );
               }}
@@ -130,43 +128,32 @@ export default function PlaylistScreen() {
           </>
         }
         rightSlot={
-          <TouchableOpacity
-            style={styles.play_button}
-            onPress={() => {
-              setPlayButtonImage(
-                (prev: import("react-native").ImageSourcePropType) => {
-                  return prev === require("@/assets/images/icons/play.png")
-                    ? require("@/assets/images/icons/pause.png")
-                    : require("@/assets/images/icons/play.png");
-                }
-              );
-            }}
-          >
+          <TouchableOpacity style={styles.play_button}>
             <Image
-              source={playButtonImage}
+              source={require("@/assets/images/icons/play.png")}
               style={styles.actionIcon}
               resizeMode="contain"
             />
           </TouchableOpacity>
         }
       />
+
       <FlatList
         data={tracks}
-        style={{ marginTop: 20 }}
-        keyExtractor={(item, index) =>
-          item.track?.id?.toString() || index.toString()
-        }
+        keyExtractor={(track) => track.id}
+        contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <LibraryTrackRow
-            title={item.track.name}
-            subtitle={item.track.artists?.[0]?.name}
-            imageUri={item.track.album?.images?.[0]?.url}
-            onPress={() => handlePlayTrack(item.track?.id)}
-            isActive={isLaunchingId === item.track?.id}
+            title={item.name}
+            subtitle={item.artists?.map((artist) => artist.name).join(", ")}
+            imageUri={item.album?.images?.[0]?.url}
+            fallbackColor="#4d2f9b"
+            onPress={() => handlePlayTrack(item.id)}
+            isActive={playingId === item.id}
             rightElement={
               <Image
                 source={
-                  isLaunchingId === item.track?.id
+                  playingId === item.id
                     ? require("@/assets/images/icons/play.png")
                     : require("@/assets/images/icons/more.png")
                 }
@@ -176,16 +163,36 @@ export default function PlaylistScreen() {
             }
           />
         )}
-        showsVerticalScrollIndicator={false}
       />
     </Box>
   );
-}
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingVertical: 75,
+    paddingVertical: 60,
+  },
+  cover: {
+    width: 225,
+    height: 225,
+    borderRadius: 32,
+    backgroundColor: "#4d2f9b",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  coverIcon: {
+    color: "#fff",
+    fontSize: 72,
+  },
+  list: {
+    paddingBottom: 200,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   play_button: {
     backgroundColor: "#1DB954",
@@ -193,16 +200,6 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     flexDirection: "row",
     alignItems: "center",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  heroCover: {
-    width: 225,
-    height: 225,
-    borderRadius: 16,
   },
   actionIcon: {
     width: 20,

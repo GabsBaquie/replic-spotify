@@ -14,6 +14,7 @@ export type LibraryItem = {
   subtitle: string;
   image?: string;
   accentColor?: string;
+  payload?: unknown;
 };
 
 type UseLibraryCollectionsState = {
@@ -64,6 +65,7 @@ export const useLibraryCollections = (): UseLibraryCollectionsState => {
         title: "Liked Songs",
         subtitle: `Playlist · ${savedTracks.total} titres`,
         accentColor: "#4d2f9b",
+        payload: { type: "liked" },
       };
 
       const playlistItems: LibraryItem[] = playlists.map((playlist: any) => ({
@@ -72,6 +74,7 @@ export const useLibraryCollections = (): UseLibraryCollectionsState => {
         title: playlist.name,
         subtitle: `Playlist · ${playlist.tracks?.total ?? 0} titres`,
         image: playlist.images?.[0]?.url,
+        payload: playlist,
       }));
 
       const artistItems: LibraryItem[] = artists.map((artist: any) => ({
@@ -80,6 +83,7 @@ export const useLibraryCollections = (): UseLibraryCollectionsState => {
         title: artist.name,
         subtitle: "Artist",
         image: artist.images?.[0]?.url,
+        payload: artist,
       }));
 
       const albumItems: LibraryItem[] = albums.map((album: any) => ({
@@ -88,6 +92,7 @@ export const useLibraryCollections = (): UseLibraryCollectionsState => {
         title: album.name,
         subtitle: `${album.artists?.[0]?.name ?? "Album"}`,
         image: album.images?.[0]?.url,
+        payload: album,
       }));
 
       const podcastItems: LibraryItem[] = shows.map((show: any) => ({
@@ -96,6 +101,7 @@ export const useLibraryCollections = (): UseLibraryCollectionsState => {
         title: show.name,
         subtitle: `${show.publisher}`,
         image: show.images?.[0]?.url,
+        payload: show,
       }));
 
       setItems([
