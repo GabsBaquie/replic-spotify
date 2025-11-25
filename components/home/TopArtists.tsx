@@ -5,27 +5,14 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from "react-native";
+import { useRouter } from "expo-router";
 import useTopArtists from "@/hooks/useTopArtists";
 import { Box, Text } from "@/components/restyle";
-import { useCallback } from "react";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
-import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
 
 export default function TopArtists() {
   const { artists, loading } = useTopArtists(10);
-  const handlePlay = useCallback(async (artistId: string) => {
-    try {
-      const deviceId = await getLocalDeviceId();
-      await playSpotifyTrack(artistId, deviceId ?? undefined);
-    } catch (error: any) {
-      Alert.alert(
-        "Lecture impossible",
-        error?.message ?? "Réessaie plus tard."
-      );
-    }
-  }, []);
+  const router = useRouter();
 
   if (loading) {
     return (
@@ -46,7 +33,14 @@ export default function TopArtists() {
         data={artists}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handlePlay(item.id)}>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(tabs)/home/artist/[id]",
+                params: { id: item.id },
+              })
+            }
+          >
             <Box style={styles.item}>
               {item.images[0] && (
                 <Image
