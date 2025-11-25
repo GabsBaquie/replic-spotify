@@ -45,11 +45,13 @@ export default function DetailPlay({
     {
       label: "View artist",
       icon: require("@/assets/images/icons/artist.png"),
-      onPress: () =>
+      onPress: () => {
         router.push({
           pathname: "/home/artist/[id]",
           params: { id: artistIds[0] },
-        }),
+        });
+        onClose();
+      },
     },
   ];
 
