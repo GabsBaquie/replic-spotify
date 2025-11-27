@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { useCreatorApplication } from "@/hooks/useCreatorApplication";
+import { useCreatorApplication } from "@/hooks/ArtistCreator/useCreatorApplication";
 
 const CreatorOnboarding = () => {
   const {

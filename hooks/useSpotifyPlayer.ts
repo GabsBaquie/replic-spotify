@@ -44,6 +44,11 @@ export default function useSpotifyPlayer() {
         throw new Error(errJson.error?.message || `Erreur ${res.status}`);
       }
 
+      if (res.status === 204) {
+        setState(null);
+        return;
+      }
+
       const json = await res.json();
       if (!json.item) {
         setState(null);

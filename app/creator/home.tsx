@@ -1,7 +1,19 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, View, ScrollView } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Box, Text } from "@/components/restyle";
+import { useProfile } from "@/hooks/useProfile";
+import { useRouter } from "expo-router";
+import { RestyleButton } from "@/components/RestyleButton";
+import { useCreatorTracks } from "@/hooks/ArtistCreator/useCreatorTracks";
 
 const CREATOR_PROFILE_KEY = "creator_profile";
 
@@ -14,6 +26,15 @@ type CreatorProfile = {
 const CreatorHome = () => {
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const { profile: spotifyProfile, isLoading: spotifyLoading } = useProfile();
+  const {
+    loading: tracksLoading,
+    validatedTracks,
+    pendingTracks,
+    rejectedTracks,
+  } = useCreatorTracks();
+  const router = useRouter();
 
   useEffect(() => {
     AsyncStorage.getItem(CREATOR_PROFILE_KEY)
@@ -43,17 +64,189 @@ const CreatorHome = () => {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {profile.photoUri && (
-        <Image source={{ uri: profile.photoUri }} style={styles.cover} />
-      )}
-      <Text style={styles.title}>{profile.stageName}</Text>
-      <Text style={styles.badge}>Creator confirmé</Text>
-      <Box marginTop="l">
-        <Text style={styles.sectionTitle}>Bio</Text>
-        <Text style={styles.sectionContent}>{profile.bio}</Text>
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.creatorRow}
+        onPress={() => setModalVisible(true)}
+        activeOpacity={0.85}
+      >
+        {profile.photoUri ? (
+          <Image source={{ uri: profile.photoUri }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, styles.avatarFallback]} />
+        )}
+        <View style={styles.creatorInfo}>
+          <Text style={styles.stageName}>{profile.stageName}</Text>
+          <Text style={styles.badge}>Creator confirmé</Text>
+        </View>
+      </TouchableOpacity>
+
+      <RestyleButton
+        title="Envoyer un nouveau morceau"
+        onPress={() => router.push("/creator/upload")}
+        fullWidth
+        marginTop="l"
+      />
+
+      <Box style={styles.section}>
+        <Text style={styles.sectionTitle}>Validés récemment</Text>
+        {tracksLoading ? (
+          <ActivityIndicator color="#1DB954" style={styles.sectionLoader} />
+        ) : validatedTracks.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.slider}
+          >
+            {validatedTracks.map((track) => (
+              <View key={track.id} style={styles.sliderCard}>
+                <Image
+                  source={{ uri: track.coverUri }}
+                  style={styles.sliderCover}
+                />
+                <Text style={styles.sliderTitle} numberOfLines={1}>
+                  {track.title}
+                </Text>
+                <Text style={styles.badgeValidated}>Validé</Text>
+              </View>
+            ))}
+          </ScrollView>
+        ) : (
+          <Box style={styles.emptyCard}>
+            <Text style={styles.emptyText}>
+              Aucun morceau validé pour l’instant.
+            </Text>
+          </Box>
+        )}
       </Box>
-    </ScrollView>
+
+      <Box style={styles.section}>
+        <Text style={styles.sectionTitle}>En validation</Text>
+        {tracksLoading ? (
+          <ActivityIndicator color="#1DB954" style={styles.sectionLoader} />
+        ) : pendingTracks.length > 0 ? (
+          pendingTracks.map((track) => (
+            <View key={track.id} style={styles.pendingRow}>
+              <Image
+                source={{ uri: track.coverUri }}
+                style={styles.pendingCover}
+              />
+              <View style={styles.pendingInfo}>
+                <Text style={styles.pendingTitle}>{track.title}</Text>
+                {track.coCreators.length > 0 && (
+                  <Text style={styles.pendingCoCreators} numberOfLines={1}>
+                    Avec {track.coCreators.join(", ")}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.badgePending}>En validation</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyText}>Aucune soumission en attente.</Text>
+        )}
+      </Box>
+
+      <Box style={styles.section}>
+        <Text style={styles.sectionTitle}>Refusés</Text>
+        {tracksLoading ? (
+          <ActivityIndicator color="#1DB954" style={styles.sectionLoader} />
+        ) : rejectedTracks.length > 0 ? (
+          rejectedTracks.map((track) => (
+            <View key={track.id} style={styles.pendingRow}>
+              <Image
+                source={{ uri: track.coverUri }}
+                style={styles.pendingCover}
+              />
+              <View style={styles.pendingInfo}>
+                <Text style={styles.pendingTitle}>{track.title}</Text>
+                {track.coCreators.length > 0 && (
+                  <Text style={styles.pendingCoCreators} numberOfLines={1}>
+                    Avec {track.coCreators.join(", ")}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.badgeRejected}>Rejeté</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyText}>Aucun morceau refusé.</Text>
+        )}
+      </Box>
+
+      <Box style={styles.footer}>
+        <RestyleButton
+          title="Revenir à l’accueil classique"
+          onPress={() => router.replace("/(tabs)/home")}
+          fullWidth
+          marginTop="s"
+          variant="outline"
+        />
+      </Box>
+
+      <Modal
+        visible={isModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.closeText}>Fermer</Text>
+            </TouchableOpacity>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalContent}
+            >
+              <View style={styles.modalRow}>
+                {profile.photoUri ? (
+                  <Image
+                    source={{ uri: profile.photoUri }}
+                    style={styles.modalAvatar}
+                  />
+                ) : (
+                  <View style={[styles.modalAvatar, styles.avatarFallback]} />
+                )}
+                <View style={styles.modalInfo}>
+                  <Text style={styles.modalName}>{profile.stageName}</Text>
+                  <Text style={styles.badge}>Creator confirmé</Text>
+                </View>
+              </View>
+              <Text style={styles.modalLabel}>Bio</Text>
+              <Text style={styles.modalDescription}>{profile.bio}</Text>
+
+              <View style={styles.divider} />
+
+              <Text style={styles.modalTitle}>Compte Spotify lié</Text>
+              {spotifyLoading ? (
+                <ActivityIndicator
+                  color="#1DB954"
+                  style={styles.loadingIndicator}
+                />
+              ) : spotifyProfile ? (
+                <>
+                  <Text style={styles.spotifyName}>
+                    {spotifyProfile.display_name}
+                  </Text>
+                  <Text style={styles.spotifyEmail}>
+                    {spotifyProfile.email}
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.modalDescription}>
+                  Impossible de charger ton profil Spotify.
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
@@ -61,10 +254,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-  },
-  content: {
     padding: 24,
-    alignItems: "center",
   },
   center: {
     flex: 1,
@@ -73,20 +263,39 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: "#121212",
   },
-  cover: {
-    width: 220,
-    height: 220,
-    borderRadius: 16,
-    marginBottom: 20,
+  creatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1c1c1e",
+    borderRadius: 20,
+    padding: 16,
+    marginTop: 32,
   },
-  title: {
+  footer: {
+    marginTop: "auto",
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 16,
+  },
+  avatarFallback: {
+    backgroundColor: "#2f2f2f",
+  },
+  creatorInfo: {
+    marginLeft: 16,
+  },
+  stageName: {
     color: "#fff",
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "700",
   },
   badge: {
     color: "#1DB954",
-    marginTop: 6,
+    marginTop: 4,
+  },
+  section: {
+    marginTop: 32,
   },
   sectionTitle: {
     color: "#fff",
@@ -97,6 +306,154 @@ const styles = StyleSheet.create({
   sectionContent: {
     color: "#d0d0d0",
     lineHeight: 22,
+  },
+  sectionLoader: {
+    marginTop: 16,
+  },
+  slider: {
+    paddingVertical: 8,
+    gap: 16,
+  },
+  sliderCard: {
+    width: 150,
+    backgroundColor: "#1c1c1e",
+    borderRadius: 18,
+    padding: 12,
+    marginRight: 16,
+  },
+  sliderCover: {
+    width: "100%",
+    height: 120,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  sliderTitle: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  badgeValidated: {
+    marginTop: 6,
+    color: "#58f087",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  emptyCard: {
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: "#1c1c1e",
+  },
+  emptyText: {
+    color: "#7a7a7a",
+  },
+  pendingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#2a2a2a",
+  },
+  pendingCover: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    marginRight: 12,
+  },
+  pendingInfo: {
+    flex: 1,
+  },
+  pendingTitle: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  pendingCoCreators: {
+    color: "#a0a0a0",
+    marginTop: 4,
+  },
+  badgePending: {
+    color: "#f6c343",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  badgeRejected: {
+    color: "#ff6b6b",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  modalCard: {
+    width: "100%",
+    maxHeight: "90%",
+    backgroundColor: "#1c1c1e",
+    borderRadius: 24,
+    padding: 20,
+  },
+  closeButton: {
+    alignSelf: "flex-end",
+  },
+  closeText: {
+    color: "#fff",
+  },
+  modalContent: {
+    paddingBottom: 16,
+  },
+  modalTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 12,
+  },
+  modalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+  },
+  modalAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 20,
+  },
+  modalInfo: {
+    marginLeft: 16,
+  },
+  modalName: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  modalLabel: {
+    color: "#a0a0a0",
+    marginTop: 16,
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  modalDescription: {
+    color: "#d0d0d0",
+    lineHeight: 20,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#2a2a2a",
+    marginVertical: 20,
+  },
+  spotifyName: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  spotifyEmail: {
+    color: "#d0d0d0",
+    marginTop: 4,
+  },
+  loadingIndicator: {
+    marginVertical: 8,
   },
 });
 

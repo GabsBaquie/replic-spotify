@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+---
+
+Contexte :
+Je travaille sur une app React Native (Expo) + TypeScript avec Supabase comme backend.
+
+J'ai cette structure Supabase :
+
+Tables :
+- artists (id uuid, name text, bio text, image_url text, status artist_status, created_at)
+- songs (id uuid, title text, image_url text, song_url text, status song_status, created_at)
+- songs_artists (song_id uuid, artist_id uuid, created_at)
+
+Enums :
+- artist_status : 'pending', 'validated', 'refused'
+- song_status : 'pending', 'validated', 'refused'
+
+Storage buckets :
+- artists_images (public) → images des artistes
+- albums_images (public) → covers des songs
+- tracks (privé) → fichiers audio
+
+Objectif :
+Crée-moi un service Supabase (lib/supabase.ts) avec les fonctions suivantes :
+
+1. uploadFile(bucket, filename, file) → upload un fichier dans Storage
+2. getPublicUrl(bucket, path) → récupère l'URL publique
+3. getSignedUrl(bucket, path, expiresIn) → récupère une URL signée (pour tracks privés)
+
+4. createArtist(name, bio, imageFile) → upload image + insert artist avec status 'pending'
+5. createSong(title, imageFile, audioFile, artistIds[]) → upload cover + audio + insert song + liaisons songs_artists
+
+6. getValidatedSongs() → SELECT songs avec status 'validated' + leurs artists validés
+7. getValidatedArtists() → SELECT artists avec status 'validated'
+8. getPendingSongs() → pour l'admin
+9. getPendingArtists() → pour l'admin
+
+10. validateSong(songId) → UPDATE status = 'validated'
+11. validateArtist(artistId) → UPDATE status = 'validated'
+12. refuseSong(songId) → UPDATE status = 'refused'
+13. refuseArtist(artistId) → UPDATE status = 'refused'
+
+Utilise @supabase/supabase-js avec TypeScript.
+Ajoute les types pour Artist, Song, SongArtist.
+Gère les erreurs proprement.
+
