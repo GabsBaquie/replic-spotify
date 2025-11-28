@@ -5,7 +5,7 @@ import { useTheme } from '@shopify/restyle';
 import { HapticTab } from '@/components/HapticTab';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { Theme } from '@/theme/theme';
-import NowPlayingBar from '@/components/player/NowPlayingBar';
+import NowPlayingBar from '@/features/player/NowPlayingBar';
 
 
 export default function TabLayout() {

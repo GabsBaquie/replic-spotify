@@ -4,12 +4,12 @@ import { Box, Text } from "@/components/restyle";
 import { LibraryHeader } from "@/components/ui/LibraryHeader";
 import { LibraryFilterTabs } from "@/components/ui/LibraryFilterTabs";
 import { LibraryList } from "@/components/ui/LibraryList";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/hooks/Spotify";
 import {
   LibraryFilter,
   LibraryItem,
   useLibraryCollections,
-} from "@/hooks/useLibraryCollections";
+} from "@/hooks/Library";
 import { useRouter } from "expo-router";
 
 const Library = () => {
@@ -26,10 +26,11 @@ const Library = () => {
 
   const handleItemPress = useCallback(
     (item: LibraryItem) => {
-      if (!item.payload) return;
+      if (!item || !item.id) return;
 
       switch (item.type) {
         case "album":
+          if (!item.payload) return;
           router.push({
             pathname: "/(tabs)/library/album/[id]",
             params: {
@@ -39,10 +40,11 @@ const Library = () => {
           });
           break;
         case "playlist":
-          if (item.id === "liked-songs") {
+          if (item.id === "liked-songs" || item.id === "saved-tracks") {
             router.push("/(tabs)/library/liked-songs");
             break;
           }
+          if (!item.payload) return;
           router.push({
             pathname: "/(tabs)/library/playlist/[id]",
             params: {

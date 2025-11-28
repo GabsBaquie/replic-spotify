@@ -16,7 +16,11 @@ export const getSavedAlbums = async (limit = 20) => {
     throw new Error(data?.error?.message || "Failed to fetch albums");
   }
 
+  // Retourner les items avec added_at pour le tri
   return Array.isArray(data.items)
-    ? data.items.map((entry: any) => entry.album)
+    ? data.items.map((entry: any) => ({
+        album: entry.album,
+        added_at: entry.added_at,
+      }))
     : [];
 };

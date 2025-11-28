@@ -1,4 +1,4 @@
-import TrackScreen from "@/components/pages/track/[id]";
+import TrackScreen from "@/features/pages/track/[id]";
 
 export default function TrackPage() {
   return (

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { StyleSheet } from "react-native";
 import { Box } from "@/components/restyle";
-import TopArtists from "@/components/home/TopArtists";
-import RecentlyPlayed from "@/components/home/RecentlyPlayed";
-import { MyProfile } from "@/components/home/MyProfile";
-import { HomeNavbar } from "@/components/home/HomeNavbar";
-import { useProfile } from "@/hooks/useProfile";
+import TopArtists from "@/features/home/TopArtists";
+import RecentlyPlayed from "@/features/home/RecentlyPlayed";
+import { MyProfile } from "@/features/home/MyProfile";
+import { HomeNavbar } from "@/features/home/HomeNavbar";
+import { useProfile } from "@/hooks/Spotify";
 
 export default function Home() {
   const [isProfileVisible, setIsProfileVisible] = useState(false);

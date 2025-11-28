@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { Box, Text } from "@/components/restyle";
-import type { LibraryFilter } from "@/hooks/useLibraryCollections";
+import type { LibraryFilter } from "@/hooks/Library";
 
 const FILTERS: { label: string; value: LibraryFilter }[] = [
   { label: "Playlists", value: "playlist" },

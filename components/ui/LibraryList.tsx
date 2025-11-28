@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Box, Text } from "@/components/restyle";
-import type { LibraryItem } from "@/hooks/useLibraryCollections";
+import type { LibraryItem } from "@/hooks/Library";
 
 type LibraryListProps = {
   items: LibraryItem[];
