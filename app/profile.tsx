@@ -18,10 +18,10 @@ export default function Profile() {
   if (isLoading || isCreatorLoading) {
     return (
       <Box style={styles.container}>
-        <View style={styles.center}>
+      <View style={styles.center}>
           <ActivityIndicator size="large" color="#1DB954" />
           <Text style={styles.loadingText}>Chargement du profil...</Text>
-        </View>
+      </View>
       </Box>
     );
   }
@@ -41,9 +41,9 @@ export default function Profile() {
   if (!profile) {
     return (
       <Box style={styles.container}>
-        <View style={styles.center}>
+      <View style={styles.center}>
           <Text style={styles.errorText}>Aucune information disponible</Text>
-        </View>
+      </View>
       </Box>
     );
   }

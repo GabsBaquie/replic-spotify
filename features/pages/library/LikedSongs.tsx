@@ -9,8 +9,7 @@ import {
 } from "react-native";
 import { Box, Text } from "@/components/restyle";
 import { getSavedTracks } from "@/query/library/getSavedTracks";
-import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
+import { startPlayback } from "@/query/player/startPlayback";
 import { LibraryHero } from "@/components/ui/LibraryHero";
 import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
 import PlayPauseButton from "@/components/ui/PlayPauseButton";
@@ -52,8 +51,7 @@ export const LikedSongs = () => {
   const handlePlayTrack = async (trackId: string) => {
     try {
       setPlayingId(trackId);
-      const deviceId = await getLocalDeviceId();
-      await playSpotifyTrack(trackId, deviceId ?? undefined);
+      await startPlayback({ uris: [`spotify:track:${trackId}`] });
     } catch (error: any) {
       Alert.alert(
         "Lecture impossible",

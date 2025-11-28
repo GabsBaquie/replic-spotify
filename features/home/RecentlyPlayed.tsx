@@ -10,16 +10,14 @@ import {
 import { useCallback } from "react";
 import useRecentlyPlayed from "@/hooks/Spotify/useRecentlyPlayed";
 import { Box, Text } from "@/components/restyle";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
-import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
+import { startPlayback } from "@/query/player/startPlayback";
 
 export default function RecentlyPlayed() {
   const { tracks, loading } = useRecentlyPlayed(20);
 
   const handlePlay = useCallback(async (trackId: string) => {
     try {
-      const deviceId = await getLocalDeviceId();
-      await playSpotifyTrack(trackId, deviceId ?? undefined);
+      await startPlayback({ uris: [`spotify:track:${trackId}`] });
     } catch (error: any) {
       Alert.alert(
         "Lecture impossible",

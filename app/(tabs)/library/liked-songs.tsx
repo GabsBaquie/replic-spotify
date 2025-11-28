@@ -1,4 +1,4 @@
-import { LikedSongs } from "@/components/pages/library/LikedSongs";
+import { LikedSongs } from "@/features/pages/library/LikedSongs";
 
 const LikedSongsPage = () => <LikedSongs />;
 

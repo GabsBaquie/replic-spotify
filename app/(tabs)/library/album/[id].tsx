@@ -1,4 +1,4 @@
-import AlbumScreen from "@/components/pages/album/[id]";
+import AlbumScreen from "@/features/pages/album/[id]";
 
 const LibraryAlbumPage = () => <AlbumScreen />;
 

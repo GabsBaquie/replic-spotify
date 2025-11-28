@@ -10,8 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { fetchPlaylistTracks } from "@/query/search/playlistTracks";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
-import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
+import { startPlayback } from "@/query/player/startPlayback";
 import { LibraryHero } from "@/components/ui/LibraryHero";
 import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
 import PlayPauseButton from "@/components/ui/PlayPauseButton";
@@ -44,12 +43,17 @@ export default function PlaylistScreen() {
     fetchTracks();
   }, [data.id]);
 
-  const handlePlayTrack = async (trackId?: string) => {
+  const handlePlayTrack = async (track?: any) => {
+    const trackId = track?.track?.id ?? track?.id;
     if (!trackId) return;
     try {
       setIsLaunchingId(trackId);
-      const deviceId = await getLocalDeviceId();
-      await playSpotifyTrack(trackId, deviceId ?? undefined);
+      const trackUri =
+        track?.track?.uri || track?.uri || `spotify:track:${trackId}`;
+      await startPlayback({
+        contextUri: `spotify:playlist:${data.id}`,
+        offsetUri: trackUri,
+      });
     } catch (error: any) {
       Alert.alert(
         "Lecture impossible",
@@ -140,7 +144,7 @@ export default function PlaylistScreen() {
             title={item.track.name}
             subtitle={item.track.artists?.[0]?.name}
             imageUri={item.track.album?.images?.[0]?.url}
-            onPress={() => handlePlayTrack(item.track?.id)}
+            onPress={() => handlePlayTrack(item)}
             isActive={isLaunchingId === item.track?.id}
             rightElement={
               <Image
