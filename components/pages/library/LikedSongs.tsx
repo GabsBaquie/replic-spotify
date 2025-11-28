@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,10 +13,7 @@ import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
 import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
 import { LibraryHero } from "@/components/ui/LibraryHero";
 import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
-import useSpotifyPlayer from "@/hooks/Spotify/useSpotifyPlayer";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const API_BASE = "https://api.spotify.com/v1";
+import PlayPauseButton from "@/components/ui/PlayPauseButton";
 
 type SavedTrack = {
   id: string;
@@ -35,8 +32,6 @@ export const LikedSongs = () => {
   const [likeImage, setLikeImage] = useState(
     require("@/assets/images/icons/like_on.png")
   );
-  const { state, togglePlayPause, refresh } = useSpotifyPlayer();
-  const [isPlayingLikedSongs, setIsPlayingLikedSongs] = useState(false);
 
   useEffect(() => {
     const fetchLikedTracks = async () => {
@@ -54,23 +49,6 @@ export const LikedSongs = () => {
     fetchLikedTracks();
   }, []);
 
-  // Surveiller l'état du player pour mettre à jour isPlayingLikedSongs
-  useEffect(() => {
-    if (!state || !tracks.length) return;
-
-    const currentTrackUri = state.track?.uri;
-    if (!currentTrackUri) {
-      setIsPlayingLikedSongs(false);
-      return;
-    }
-
-    const currentTrackId = currentTrackUri.replace("spotify:track:", "");
-    const isPlaying =
-      !state.isPaused && tracks.some((track) => track.id === currentTrackId);
-
-    setIsPlayingLikedSongs(isPlaying);
-  }, [state, tracks]);
-
   const handlePlayTrack = async (trackId: string) => {
     try {
       setPlayingId(trackId);
@@ -85,68 +63,6 @@ export const LikedSongs = () => {
       setPlayingId(null);
     }
   };
-
-  const handlePlayPlaylist = useCallback(async () => {
-    try {
-      const token = await AsyncStorage.getItem("spotify_access_token");
-      if (!token) {
-        Alert.alert("Erreur", "Token d'accès manquant");
-        return;
-      }
-
-      const deviceId = await getLocalDeviceId();
-      if (!deviceId) {
-        Alert.alert("Erreur", "Aucun appareil disponible");
-        return;
-      }
-
-      // Vérifier si on joue déjà un track de cette liste
-      if (isPlayingLikedSongs) {
-        // Si on joue déjà un track de la liste, toggle play/pause
-        await togglePlayPause();
-        return;
-      }
-
-      // Lancer toute la playlist "liked songs"
-      // On utilise les URIs des tracks sauvegardés
-      const trackUris = tracks.map((track) => `spotify:track:${track.id}`);
-
-      if (trackUris.length === 0) {
-        Alert.alert("Erreur", "Aucun titre liké à lire");
-        return;
-      }
-
-      // Lancer la lecture avec tous les tracks
-      const response = await fetch(
-        `${API_BASE}/me/player/play?device_id=${deviceId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            uris: trackUris,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error?.message || "Impossible de lancer la lecture"
-        );
-      }
-
-      // Rafraîchir l'état après avoir lancé la lecture
-      setTimeout(() => refresh(), 500);
-    } catch (error: any) {
-      Alert.alert(
-        "Lecture impossible",
-        error?.message ?? "Réessaie plus tard."
-      );
-    }
-  }, [tracks, isPlayingLikedSongs, togglePlayPause, refresh]);
 
   if (isLoading) {
     return (
@@ -213,20 +129,9 @@ export const LikedSongs = () => {
           </>
         }
         rightSlot={
-          <TouchableOpacity
-            style={styles.play_button}
-            onPress={handlePlayPlaylist}
-          >
-            <Image
-              source={
-                isPlayingLikedSongs
-                  ? require("@/assets/images/icons/pause.png")
-                  : require("@/assets/images/icons/play.png")
-              }
-              style={styles.actionIcon}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+          <PlayPauseButton
+            trackUris={tracks.map((track) => `spotify:track:${track.id}`)}
+          />
         }
       />
 

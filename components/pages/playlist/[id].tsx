@@ -14,13 +14,11 @@ import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
 import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
 import { LibraryHero } from "@/components/ui/LibraryHero";
 import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
+import PlayPauseButton from "@/components/ui/PlayPauseButton";
 
 export default function PlaylistScreen() {
   const { item } = useLocalSearchParams();
   const data = JSON.parse(item as string);
-  const [playButtonImage, setPlayButtonImage] = useState(
-    require("@/assets/images/icons/play.png")
-  );
   const [downloadImage, setDownloadImage] = useState(
     require("@/assets/images/icons/download_off.png")
   );
@@ -129,26 +127,7 @@ export default function PlaylistScreen() {
             </TouchableOpacity>
           </>
         }
-        rightSlot={
-          <TouchableOpacity
-            style={styles.play_button}
-            onPress={() => {
-              setPlayButtonImage(
-                (prev: import("react-native").ImageSourcePropType) => {
-                  return prev === require("@/assets/images/icons/play.png")
-                    ? require("@/assets/images/icons/pause.png")
-                    : require("@/assets/images/icons/play.png");
-                }
-              );
-            }}
-          >
-            <Image
-              source={playButtonImage}
-              style={styles.actionIcon}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        }
+        rightSlot={<PlayPauseButton />}
       />
       <FlatList
         data={tracks}

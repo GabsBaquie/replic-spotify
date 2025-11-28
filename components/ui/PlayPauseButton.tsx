@@ -7,7 +7,13 @@ import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
 
 const API_BASE = "https://api.spotify.com/v1";
 
-export default function PlayPauseButton() {
+type PlayPauseButtonProps = {
+  trackUris?: string[]; // Pour liked songs: liste des URIs des tracks
+};
+
+export default function PlayPauseButton({
+  trackUris,
+}: PlayPauseButtonProps = {}) {
   // read optional track or artist context from route params
   const { item, id } = useLocalSearchParams<{ item?: string; id?: string }>();
   let data: any = null;
@@ -17,6 +23,8 @@ export default function PlayPauseButton() {
     } catch {}
   }
   const segments = useSegments() as string[];
+  const isLikedSongs = segments.includes("liked-songs");
+
   // determine the desired playback URI (track or context)
   let targetUri: string | null = null;
   if (segments.includes("track") && data?.uri) {
@@ -25,16 +33,33 @@ export default function PlayPauseButton() {
     targetUri = `spotify:album:${data.id}`;
   } else if (segments.includes("artist") && id) {
     targetUri = `spotify:artist:${id}`;
-  } else if (segments.includes("playlist") && id) {
-    targetUri = `spotify:playlist:${id}`;
+  } else if (segments.includes("playlist")) {
+    // Pour les playlists, utiliser id depuis les params ou depuis data
+    const playlistId = id || data?.id;
+    if (playlistId) {
+      targetUri = `spotify:playlist:${playlistId}`;
+    }
   }
   const { state, togglePlayPause, refresh } = useSpotifyPlayer();
+
+  // Pour liked songs, vérifier si un track de la liste est en cours de lecture
+  const isPlayingLikedSongs =
+    isLikedSongs &&
+    trackUris &&
+    state &&
+    !state.isPaused &&
+    state.track?.uri &&
+    trackUris.includes(state.track.uri);
+
   // check if current playback matches this URI and is playing
   const isPlayingThisContext =
     !!state &&
     !state.isPaused &&
-    ((segments.includes("track") && state.track.uri === targetUri) ||
-      (!segments.includes("track") && state.contextUri === targetUri));
+    (isPlayingLikedSongs ||
+      (segments.includes("track") && state.track.uri === targetUri) ||
+      (!segments.includes("track") &&
+        !isLikedSongs &&
+        state.contextUri === targetUri));
 
   const handlePress = async () => {
     const token = await AsyncStorage.getItem("spotify_access_token");
@@ -47,12 +72,15 @@ export default function PlayPauseButton() {
       // currently playing this URI, so pause
       await togglePlayPause();
     } else {
-      // start playback for this URI
-      if (!targetUri) return;
-
       // build request body: track URIs for single track, else context playback with offset for albums
       let body: any;
-      if (segments.includes("track")) {
+      if (isLikedSongs && trackUris && trackUris.length > 0) {
+        // Pour liked songs, utiliser les URIs des tracks
+        body = { uris: trackUris };
+      } else if (!targetUri) {
+        // Si pas de targetUri et pas de trackUris, on ne peut pas lancer
+        return;
+      } else if (segments.includes("track")) {
         // for track pages, play the individual track URI
         body = { uris: [targetUri] };
       } else if (segments.includes("album")) {
