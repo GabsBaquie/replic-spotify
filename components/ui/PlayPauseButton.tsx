@@ -2,10 +2,7 @@ import React from "react";
 import { TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useLocalSearchParams, useSegments } from "expo-router";
 import useSpotifyPlayer from "@/hooks/Spotify/useSpotifyPlayer";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
-
-const API_BASE = "https://api.spotify.com/v1";
+import { startPlayback } from "@/query/player/startPlayback";
 
 type PlayPauseButtonProps = {
   trackUris?: string[]; // Pour liked songs: liste des URIs des tracks
@@ -61,67 +58,41 @@ export default function PlayPauseButton({
         !isLikedSongs &&
         state.contextUri === targetUri));
 
-  const activateDeviceIfNeeded = async (
-    token: string,
-    deviceId: string
-  ): Promise<void> => {
-    try {
-      await fetch(`${API_BASE}/me/player/transfer`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ device_ids: [deviceId], play: false }),
-      });
-    } catch (error) {
-      console.warn("[PlayPauseButton] Impossible d'activer le device:", error);
-    }
-  };
-
   const handlePress = async () => {
-    const token = await AsyncStorage.getItem("spotify_access_token");
-    if (!token) return;
-    const deviceId = await getLocalDeviceId();
-    if (!deviceId) return;
-
     // toggle play/pause for this URI
     if (isPlayingThisContext) {
       // currently playing this URI, so pause
       await togglePlayPause();
-    } else {
-      await activateDeviceIfNeeded(token, deviceId);
+      return;
+    }
 
-      // build request body: track URIs for single track, else context playback avec offset pour albums
-      let body: any;
+    try {
       if (isLikedSongs && trackUris && trackUris.length > 0) {
-        // Pour liked songs, utiliser les URIs des tracks
-        body = { uris: trackUris };
-      } else if (!targetUri) {
-        // Si pas de targetUri et pas de trackUris, on ne peut pas lancer
-        return;
-      } else if (segments.includes("track")) {
-        // for track pages, play the individual track URI
-        body = { uris: [targetUri] };
-      } else if (segments.includes("album")) {
-        // for album pages, play entire album starting at first track
-        body = { context_uri: targetUri, offset: { position: 0 } };
+        await startPlayback({ uris: trackUris });
+      } else if (targetUri) {
+        if (segments.includes("track")) {
+          await startPlayback({ uris: [targetUri] });
+        } else if (
+          segments.includes("album") ||
+          segments.includes("playlist")
+        ) {
+          await startPlayback({ contextUri: targetUri });
+        } else {
+          await startPlayback(
+            trackUris && trackUris.length > 0
+              ? { uris: trackUris }
+              : { contextUri: targetUri }
+          );
+        }
       } else {
-        // for other contexts (artist, playlist), play context at default
-        body = { context_uri: targetUri };
+        console.warn("[PlayPauseButton] Aucun targetUri ou trackUris fourni.");
+        return;
       }
-
-      await fetch(`${API_BASE}/me/player/play?device_id=${deviceId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
 
       // Rafraîchir l'état après avoir lancé la lecture
       setTimeout(() => refresh(), 500);
+    } catch (error) {
+      console.error("[PlayPauseButton] startPlayback error:", error);
     }
   };
 

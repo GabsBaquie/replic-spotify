@@ -12,8 +12,7 @@ import {
 import PlayPauseButton from "@/components/ui/PlayPauseButton";
 import { LibraryHero } from "@/components/ui/LibraryHero";
 import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
-import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
+import { startPlayback } from "@/query/player/startPlayback";
 
 type ActionConfig = {
   label: string;
@@ -68,8 +67,7 @@ export default function TrackScreen() {
   useEffect(() => {
     const autoplay = async () => {
       try {
-        const deviceId = await getLocalDeviceId();
-        await playSpotifyTrack(data.id, deviceId ?? undefined);
+        await startPlayback({ uris: [`spotify:track:${data.id}`] });
       } catch (error) {
         console.error("Failed to autoplay track", error);
       }

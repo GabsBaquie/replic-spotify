@@ -13,8 +13,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import albumTracks from "@/query/search/albumTracks";
-import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
+import { startPlayback } from "@/query/player/startPlayback";
 
 export default function AlbumScreen() {
   const { item } = useLocalSearchParams();
@@ -47,8 +46,10 @@ export default function AlbumScreen() {
   const handlePlayTrack = async (trackId: string) => {
     try {
       setIsLaunchingId(trackId);
-      const deviceId = await getLocalDeviceId();
-      await playSpotifyTrack(trackId, deviceId ?? undefined);
+      await startPlayback({
+        contextUri: `spotify:album:${data.id}`,
+        offsetUri: `spotify:track:${trackId}`,
+      });
     } catch (error: any) {
       Alert.alert(
         "Lecture impossible",

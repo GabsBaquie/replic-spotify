@@ -14,8 +14,7 @@ import { useLocalSearchParams } from "expo-router";
 import PlayPauseButton from "@/components/ui/PlayPauseButton";
 import { LibraryHero } from "@/components/ui/LibraryHero";
 import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
-import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";
+import { startPlayback } from "@/query/player/startPlayback";
 
 export default function ArtistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,8 +22,7 @@ export default function ArtistScreen() {
 
   const handlePlay = useCallback(async (trackId: string) => {
     try {
-      const deviceId = await getLocalDeviceId();
-      await playSpotifyTrack(trackId, deviceId ?? undefined);
+      await startPlayback({ uris: [`spotify:track:${trackId}`] });
     } catch (error: any) {
       Alert.alert(
         "Lecture impossible",
