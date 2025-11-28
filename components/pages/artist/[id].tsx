@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import useArtist from "@/hooks/useArtist";
+import useArtist from "@/hooks/Spotify/useArtist";
 import { Box } from "@/components/restyle";
 import {
   View,

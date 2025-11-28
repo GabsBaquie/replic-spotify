@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { useCallback } from "react";
-import useRecentlyPlayed from "@/hooks/useRecentlyPlayed";
+import useRecentlyPlayed from "@/hooks/Spotify/useRecentlyPlayed";
 import { Box, Text } from "@/components/restyle";
 import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
 import { playSpotifyTrack } from "@/query/player/playSpotifyTrack";

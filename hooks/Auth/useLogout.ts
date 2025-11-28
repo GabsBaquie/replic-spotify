@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 const AUTH_STORAGE_KEYS = [
   "spotify_access_token",
   "spotify_refresh_token",
-  "user_is_creator", // Clean le local storage pour laisser le creator flow
+  "user_is_creator",
 ];
 
 export const useLogout = () => {

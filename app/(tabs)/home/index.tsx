@@ -5,7 +5,7 @@ import TopArtists from "@/components/home/TopArtists";
 import RecentlyPlayed from "@/components/home/RecentlyPlayed";
 import { MyProfile } from "@/components/home/MyProfile";
 import { HomeNavbar } from "@/components/home/HomeNavbar";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/hooks/Spotify";
 
 export default function Home() {
   const [isProfileVisible, setIsProfileVisible] = useState(false);

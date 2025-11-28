@@ -3,9 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import { createArtist, getArtistBySpotifyUserId } from "@/lib/supabase";
 
 const CREATOR_FLAG_KEY = "user_is_creator";
 const CREATOR_PROFILE_KEY = "creator_profile";
+const CREATOR_ARTIST_ID_KEY = "creator_artist_id";
 
 export const useCreatorApplication = () => {
   const [stageName, setStageName] = useState("");
@@ -50,10 +52,61 @@ export const useCreatorApplication = () => {
     }
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const spotifyToken = await AsyncStorage.getItem("spotify_access_token");
+      if (!spotifyToken) {
+        setLoading(false);
+        Alert.alert(
+          "Authentification requise",
+          "Tu dois être connecté à Spotify pour devenir creator."
+        );
+        return;
+      }
+
+      // Vérifier si un artiste existe déjà avec ce compte Spotify
+      const existingArtist = await getArtistBySpotifyUserId(spotifyToken);
+
+      if (existingArtist) {
+        // Si l'artiste existe déjà, stocker ses infos et rediriger vers l'espace creator
+        await AsyncStorage.multiSet([
+          [CREATOR_FLAG_KEY, "true"],
+          [CREATOR_ARTIST_ID_KEY, existingArtist.id],
+          [
+            CREATOR_PROFILE_KEY,
+            JSON.stringify({
+              stageName: existingArtist.name,
+              bio: existingArtist.bio,
+              photoUri: existingArtist.image_url,
+              status: existingArtist.status,
+              artistId: existingArtist.id,
+            }),
+          ],
+        ]);
+        router.replace("/creator/home");
+        reset();
+        return;
+      }
+
+      // Si l'artiste n'existe pas, créer un nouvel artiste
+      const artist = await createArtist(
+        stageName.trim(),
+        bio.trim(),
+        photoUri,
+        spotifyToken
+      );
+
       await AsyncStorage.multiSet([
         [CREATOR_FLAG_KEY, "true"],
-        [CREATOR_PROFILE_KEY, JSON.stringify({ stageName, bio, photoUri })],
+        [CREATOR_ARTIST_ID_KEY, artist.id],
+        [
+          CREATOR_PROFILE_KEY,
+          JSON.stringify({
+            stageName: artist.name,
+            bio: artist.bio,
+            photoUri,
+            status: artist.status,
+            artistId: artist.id,
+          }),
+        ],
       ]);
       Alert.alert(
         "Créateur enregistré",

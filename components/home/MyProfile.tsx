@@ -7,13 +7,15 @@ import {
   View,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Box, Text } from "@/components/restyle";
-import type { Profile } from "@/hooks/useProfile";
+import type { Profile } from "@/hooks/Spotify";
 import { RestyleButton } from "@/components/RestyleButton";
-import { useLogout } from "@/hooks/useLogout";
+import { useLogout } from "@/hooks/Auth";
+import { getArtistBySpotifyUserId } from "@/lib/supabase";
+import { useCreatorStatus } from "@/hooks/ArtistCreator";
 
 type MyProfileProps = {
   isVisible: boolean;
@@ -32,24 +34,63 @@ export const MyProfile = ({
 }: MyProfileProps) => {
   const avatarUri = profile?.images?.[0]?.url;
   const router = useRouter();
-  const [isCreator, setIsCreator] = useState(false);
+  const { isCreator, refresh: refreshCreatorStatus } = useCreatorStatus();
   const logout = useLogout();
 
-  useEffect(() => {
-    AsyncStorage.getItem("user_is_creator")
-      .then((value) => setIsCreator(value === "true"))
-      .catch(() => {});
-  }, []);
+  const handleStartCreator = useCallback(async () => {
+    try {
+      // Vérifier si un artiste existe déjà avec ce compte Spotify
+      const spotifyToken = await AsyncStorage.getItem("spotify_access_token");
+      if (spotifyToken) {
+        const existingArtist = await getArtistBySpotifyUserId(spotifyToken);
 
-  const handleStartCreator = useCallback(() => {
+        if (existingArtist) {
+          // Si l'artiste existe déjà, stocker ses infos et rediriger vers l'espace creator
+          await AsyncStorage.multiSet([
+            ["user_is_creator", "true"],
+            ["creator_artist_id", existingArtist.id],
+            [
+              "creator_profile",
+              JSON.stringify({
+                stageName: existingArtist.name,
+                bio: existingArtist.bio,
+                photoUri: existingArtist.image_url,
+                status: existingArtist.status,
+                artistId: existingArtist.id,
+              }),
+            ],
+          ]);
+          // Rafraîchir le statut creator
+          await refreshCreatorStatus();
+          onClose();
+          router.push("/creator/home");
+          return;
+        }
+      }
+    } catch (error) {
+      // Erreur silencieuse, continuer vers le formulaire de création
+      console.warn("[MyProfile] Erreur vérification artist existant:", error);
+    }
+
+    // Si aucun artiste n'existe, rediriger vers le formulaire de création
     onClose();
     router.push("/creator");
-  }, [router, onClose]);
+  }, [router, onClose, refreshCreatorStatus]);
 
-  const handleGoToCreator = useCallback(() => {
-    onClose();
-    router.push("/creator/home");
-  }, [router, onClose]);
+  const handleGoToCreator = useCallback(async () => {
+    // Vérifier à nouveau le statut avant de rediriger
+    await refreshCreatorStatus();
+
+    if (isCreator) {
+      // L'artiste existe, rediriger vers l'espace creator
+      onClose();
+      router.push("/creator/home");
+    } else {
+      // L'artiste n'existe plus, rediriger vers le formulaire
+      onClose();
+      router.push("/creator");
+    }
+  }, [router, onClose, isCreator, refreshCreatorStatus]);
 
   const handleLogout = useCallback(async () => {
     await logout();

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   ActivityIndicator,
   Image,
@@ -8,24 +9,15 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Box, Text } from "@/components/restyle";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/hooks/Spotify";
 import { useRouter } from "expo-router";
 import { RestyleButton } from "@/components/RestyleButton";
 import { useCreatorTracks } from "@/hooks/ArtistCreator/useCreatorTracks";
-
-const CREATOR_PROFILE_KEY = "creator_profile";
-
-type CreatorProfile = {
-  stageName: string;
-  bio: string;
-  photoUri: string | null;
-};
+import { useCreatorProfile } from "@/hooks/ArtistCreator/useCreatorProfile";
 
 const CreatorHome = () => {
-  const [profile, setProfile] = useState<CreatorProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { artist, loading } = useCreatorProfile();
   const [isModalVisible, setModalVisible] = useState(false);
   const { profile: spotifyProfile, isLoading: spotifyLoading } = useProfile();
   const {
@@ -36,15 +28,42 @@ const CreatorHome = () => {
   } = useCreatorTracks();
   const router = useRouter();
 
+  // image_url contient déjà l'URL publique complète depuis Supabase
+  // Fallback vers photoUri depuis AsyncStorage si image_url est null
+  const [fallbackImageUri, setFallbackImageUri] = useState<string | null>(null);
+
   useEffect(() => {
-    AsyncStorage.getItem(CREATOR_PROFILE_KEY)
-      .then((value) => {
-        if (value) {
-          setProfile(JSON.parse(value));
+    if (!artist?.image_url) {
+      // Si pas d'image_url depuis Supabase, essayer de récupérer depuis AsyncStorage
+      const loadFallbackImage = async () => {
+        const oldProfile = await AsyncStorage.getItem("creator_profile");
+        if (oldProfile) {
+          try {
+            const parsed = JSON.parse(oldProfile);
+            if (parsed.photoUri) {
+              setFallbackImageUri(parsed.photoUri);
+            }
+          } catch (err) {
+            console.error("[CreatorHome] Erreur parsing fallback:", err);
+          }
         }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+      };
+      loadFallbackImage();
+    } else {
+      setFallbackImageUri(null); // Réinitialiser si on a une image_url
+    }
+  }, [artist]);
+
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const hasTriedFallback = useRef(false); // Mémorise qu'on a déjà tenté le fallback
+
+  // Priorité : image_url depuis Supabase > fallback photoUri > null
+  // Si on a déjà tenté le fallback, utiliser directement le fallback
+  const imageUrl =
+    hasTriedFallback.current || imageError
+      ? fallbackImageUri
+      : artist?.image_url || fallbackImageUri;
 
   if (loading) {
     return (
@@ -55,10 +74,16 @@ const CreatorHome = () => {
     );
   }
 
-  if (!profile) {
+  if (!artist) {
     return (
       <View style={styles.center}>
         <Text>Aucune information creator. Reviens au formulaire.</Text>
+        <RestyleButton
+          title="Créer mon profil creator"
+          onPress={() => router.push("/creator")}
+          fullWidth
+          marginTop="l"
+        />
       </View>
     );
   }
@@ -70,14 +95,54 @@ const CreatorHome = () => {
         onPress={() => setModalVisible(true)}
         activeOpacity={0.85}
       >
-        {profile.photoUri ? (
-          <Image source={{ uri: profile.photoUri }} style={styles.avatar} />
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={styles.avatar}
+            onError={(error) => {
+              setImageLoading(false);
+
+              // Si l'erreur vient de l'image Supabase et qu'on n'a pas encore tenté le fallback
+              if (
+                artist?.image_url &&
+                !hasTriedFallback.current &&
+                fallbackImageUri
+              ) {
+                hasTriedFallback.current = true; // Mémoriser qu'on a tenté le fallback
+                setImageError(true);
+                setImageLoading(true); // Réessayer avec le fallback
+              }
+            }}
+            onLoad={() => {
+              // Ne pas réinitialiser imageError si on utilise déjà le fallback
+              if (!hasTriedFallback.current) {
+                setImageError(false);
+              }
+              setImageLoading(false);
+            }}
+            onLoadStart={() => {
+              setImageLoading(true);
+            }}
+          />
         ) : (
           <View style={[styles.avatar, styles.avatarFallback]} />
         )}
+        {imageLoading && imageUrl && (
+          <ActivityIndicator
+            style={StyleSheet.absoluteFill}
+            color="#1DB954"
+            size="small"
+          />
+        )}
         <View style={styles.creatorInfo}>
-          <Text style={styles.stageName}>{profile.stageName}</Text>
-          <Text style={styles.badge}>Creator confirmé</Text>
+          <Text style={styles.stageName}>{artist.name}</Text>
+          <Text style={styles.badge}>
+            {artist.status === "validated"
+              ? "Creator confirmé"
+              : artist.status === "pending"
+              ? "En attente de validation"
+              : "Refusé"}
+          </Text>
         </View>
       </TouchableOpacity>
 
@@ -204,21 +269,29 @@ const CreatorHome = () => {
               contentContainerStyle={styles.modalContent}
             >
               <View style={styles.modalRow}>
-                {profile.photoUri ? (
+                {imageUrl ? (
                   <Image
-                    source={{ uri: profile.photoUri }}
+                    source={{ uri: imageUrl }}
                     style={styles.modalAvatar}
                   />
                 ) : (
                   <View style={[styles.modalAvatar, styles.avatarFallback]} />
                 )}
                 <View style={styles.modalInfo}>
-                  <Text style={styles.modalName}>{profile.stageName}</Text>
-                  <Text style={styles.badge}>Creator confirmé</Text>
+                  <Text style={styles.modalName}>{artist.name}</Text>
+                  <Text style={styles.badge}>
+                    {artist.status === "validated"
+                      ? "Creator confirmé"
+                      : artist.status === "pending"
+                      ? "En attente de validation"
+                      : "Refusé"}
+                  </Text>
                 </View>
               </View>
               <Text style={styles.modalLabel}>Bio</Text>
-              <Text style={styles.modalDescription}>{profile.bio}</Text>
+              <Text style={styles.modalDescription}>
+                {artist.bio || "Aucune bio"}
+              </Text>
 
               <View style={styles.divider} />
 

@@ -10,7 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useSpotifyPlayer from '@/hooks/useSpotifyPlayer';
+import useSpotifyPlayer from '@/hooks/Spotify/useSpotifyPlayer';
 
 interface NowPlayingBarProps {
   backgroundColor?: ColorValue;

@@ -1,7 +1,7 @@
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Box, Text } from "@/components/restyle";
-import type { Profile } from "@/hooks/useProfile";
+import type { Profile } from "@/hooks/Spotify";
 
 type LibraryHeaderProps = {
   profile: Profile | null;

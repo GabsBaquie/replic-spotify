@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
-import useTopArtists from "@/hooks/useTopArtists";
+import useTopArtists from "@/hooks/Spotify/useTopArtists";
 import { Box, Text } from "@/components/restyle";
 
 export default function TopArtists() {
