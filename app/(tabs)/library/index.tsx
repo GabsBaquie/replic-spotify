@@ -26,10 +26,11 @@ const Library = () => {
 
   const handleItemPress = useCallback(
     (item: LibraryItem) => {
-      if (!item.payload) return;
+      if (!item || !item.id) return;
 
       switch (item.type) {
         case "album":
+          if (!item.payload) return;
           router.push({
             pathname: "/(tabs)/library/album/[id]",
             params: {
@@ -39,10 +40,11 @@ const Library = () => {
           });
           break;
         case "playlist":
-          if (item.id === "liked-songs") {
+          if (item.id === "liked-songs" || item.id === "saved-tracks") {
             router.push("/(tabs)/library/liked-songs");
             break;
           }
+          if (!item.payload) return;
           router.push({
             pathname: "/(tabs)/library/playlist/[id]",
             params: {

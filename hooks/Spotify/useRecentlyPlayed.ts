@@ -19,12 +19,13 @@ export default function useRecentlyPlayed(limit = 20) {
 
   useEffect(() => {
     getRecentlyPlayed(limit)
-      .then((data: Track[]) => {
-        // dédupliquer tous les morceaux en conservant l'ordre
+      .then((data: any[]) => {
+        // Extraire les tracks et dédupliquer en conservant l'ordre
         const unique: Track[] = [];
         const seenIds = new Set<string>();
-        data.forEach((track) => {
-          if (!seenIds.has(track.id)) {
+        data.forEach((item) => {
+          const track = item.track || item; // Support ancien et nouveau format
+          if (track && !seenIds.has(track.id)) {
             seenIds.add(track.id);
             unique.push(track);
           }
