@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import DetailPlay, { TrackInfo } from '@/components/player/DetailPlay';
+import React, { useState } from "react";
+import DetailPlay, { TrackInfo } from "@/features/player/DetailPlay";
 import {
   View,
   Text,
@@ -8,16 +8,16 @@ import {
   TouchableOpacity,
   ColorValue,
   Pressable,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useSpotifyPlayer from '@/hooks/Spotify/useSpotifyPlayer';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import useSpotifyPlayer from "@/hooks/Spotify/useSpotifyPlayer";
 
 interface NowPlayingBarProps {
   backgroundColor?: ColorValue;
 }
 
 export default function NowPlayingBar({
-  backgroundColor = '#121212',
+  backgroundColor = "#121212",
 }: NowPlayingBarProps) {
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
@@ -28,7 +28,7 @@ export default function NowPlayingBar({
 
   const { playbackPosition, trackDuration, isPaused, track } = state;
   const { name: trackName, artists, albumArtUri } = track;
-  const artistNames = artists.join(', ');
+  const artistNames = artists.join(", ");
 
   const progressFraction =
     trackDuration > 0 ? playbackPosition / trackDuration : 0;
@@ -70,8 +70,11 @@ export default function NowPlayingBar({
           </View>
 
           {/* Play / Pause */}
-          <TouchableOpacity onPress={togglePlayPause} style={styles.playPauseButton}>
-            <Text style={styles.playPauseIcon}>{isPaused ? '▶︎' : '⏸︎'}</Text>
+          <TouchableOpacity
+            onPress={togglePlayPause}
+            style={styles.playPauseButton}
+          >
+            <Text style={styles.playPauseIcon}>{isPaused ? "▶︎" : "⏸︎"}</Text>
           </TouchableOpacity>
 
           {/* Barre de progression sans "bulle" */}
@@ -84,8 +87,12 @@ export default function NowPlayingBar({
               ]}
             />
             <View style={styles.timeLabels}>
-              <Text style={styles.timeText}>{formatMsToMMSS(playbackPosition)}</Text>
-              <Text style={styles.timeText}>{formatMsToMMSS(trackDuration)}</Text>
+              <Text style={styles.timeText}>
+                {formatMsToMMSS(playbackPosition)}
+              </Text>
+              <Text style={styles.timeText}>
+                {formatMsToMMSS(trackDuration)}
+              </Text>
             </View>
           </View>
         </View>
@@ -100,86 +107,86 @@ export default function NowPlayingBar({
 }
 
 const styles = StyleSheet.create({
-    container: {
-      position: 'absolute',
-      bottom: 80,
-      left: 0,
-      right: 0,
-      height: 80,
-      padding: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      borderRadius: 10,
-    },
-    
-    trackInfoContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 3,
-    },
-    albumArt: {
-      width: 48,
-      height: 48,
-      borderRadius: 4,
-      backgroundColor: '#333333',
-    },
-    albumArtPlaceholder: {
-      backgroundColor: '#555555',
-    },
-    textContainer: {
-      marginLeft: 8,
-      flexShrink: 1,
-    },
-    trackName: {
-      color: '#FFFFFF',
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    artistName: {
-      color: '#B3B3B3',
-      fontSize: 12,
-      marginTop: 2,
-    },
-    playPauseButton: {
-      flex: 1,
-      alignItems: 'flex-end',
-      justifyContent: 'center',
-    },
-    playPauseIcon: {
-      fontSize: 24,
-      color: '#FFFFFF',
-    },
-    
-    progressContainer: {
-      position: 'absolute',
-      top: 60,
-      left: 12,
-      right: 12,
-      height: 20,
-    },
-  
-    progressBackground: {
-      height: 4,
-      backgroundColor: '#404040',
-      borderRadius: 2,
-      paddingHorizontal: 5,
-    },
-    progressFill: {
-      position: 'absolute',
-      left: 0,
-      height: 4,
-      backgroundColor: '#1DB954',
-      borderRadius: 2,
-    },
-  
-    timeLabels: {
-      flexDirection: 'row',
-      margin: 4,
-      justifyContent: 'space-between',
-    },
-    timeText: {
-      color: '#B3B3B3',
-      fontSize: 10,
-    },
-  });
+  container: {
+    position: "absolute",
+    bottom: 80,
+    left: 0,
+    right: 0,
+    height: 80,
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+
+  trackInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 3,
+  },
+  albumArt: {
+    width: 48,
+    height: 48,
+    borderRadius: 4,
+    backgroundColor: "#333333",
+  },
+  albumArtPlaceholder: {
+    backgroundColor: "#555555",
+  },
+  textContainer: {
+    marginLeft: 8,
+    flexShrink: 1,
+  },
+  trackName: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  artistName: {
+    color: "#B3B3B3",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  playPauseButton: {
+    flex: 1,
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  playPauseIcon: {
+    fontSize: 24,
+    color: "#FFFFFF",
+  },
+
+  progressContainer: {
+    position: "absolute",
+    top: 60,
+    left: 12,
+    right: 12,
+    height: 20,
+  },
+
+  progressBackground: {
+    height: 4,
+    backgroundColor: "#404040",
+    borderRadius: 2,
+    paddingHorizontal: 5,
+  },
+  progressFill: {
+    position: "absolute",
+    left: 0,
+    height: 4,
+    backgroundColor: "#1DB954",
+    borderRadius: 2,
+  },
+
+  timeLabels: {
+    flexDirection: "row",
+    margin: 4,
+    justifyContent: "space-between",
+  },
+  timeText: {
+    color: "#B3B3B3",
+    fontSize: 10,
+  },
+});

@@ -1,4 +1,4 @@
-import Artist from "@/components/pages/artist/[id]";
+import Artist from "@/features/pages/artist/[id]";
 
 export default function ArtistPage() {
   return (

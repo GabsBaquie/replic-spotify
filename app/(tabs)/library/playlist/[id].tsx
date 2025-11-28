@@ -1,4 +1,4 @@
-import PlaylistScreen from "@/components/pages/playlist/[id]";
+import PlaylistScreen from "@/features/pages/playlist/[id]";
 
 const LibraryPlaylistPage = () => <PlaylistScreen />;
 

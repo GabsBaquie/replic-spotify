@@ -61,6 +61,24 @@ export default function PlayPauseButton({
         !isLikedSongs &&
         state.contextUri === targetUri));
 
+  const activateDeviceIfNeeded = async (
+    token: string,
+    deviceId: string
+  ): Promise<void> => {
+    try {
+      await fetch(`${API_BASE}/me/player/transfer`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ device_ids: [deviceId], play: false }),
+      });
+    } catch (error) {
+      console.warn("[PlayPauseButton] Impossible d'activer le device:", error);
+    }
+  };
+
   const handlePress = async () => {
     const token = await AsyncStorage.getItem("spotify_access_token");
     if (!token) return;
@@ -72,7 +90,9 @@ export default function PlayPauseButton({
       // currently playing this URI, so pause
       await togglePlayPause();
     } else {
-      // build request body: track URIs for single track, else context playback with offset for albums
+      await activateDeviceIfNeeded(token, deviceId);
+
+      // build request body: track URIs for single track, else context playback avec offset pour albums
       let body: any;
       if (isLikedSongs && trackUris && trackUris.length > 0) {
         // Pour liked songs, utiliser les URIs des tracks
