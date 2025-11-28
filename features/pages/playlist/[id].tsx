@@ -43,16 +43,13 @@ export default function PlaylistScreen() {
     fetchTracks();
   }, [data.id]);
 
-  const handlePlayTrack = async (track?: any) => {
-    const trackId = track?.track?.id ?? track?.id;
+  const handlePlayTrack = async (trackId?: string, index = 0) => {
     if (!trackId) return;
     try {
       setIsLaunchingId(trackId);
-      const trackUri =
-        track?.track?.uri || track?.uri || `spotify:track:${trackId}`;
       await startPlayback({
         contextUri: `spotify:playlist:${data.id}`,
-        offsetUri: trackUri,
+        offsetPosition: index,
       });
     } catch (error: any) {
       Alert.alert(
@@ -131,7 +128,7 @@ export default function PlaylistScreen() {
             </TouchableOpacity>
           </>
         }
-        rightSlot={<PlayPauseButton />}
+        rightSlot={<PlayPauseButton contextUri={`spotify:playlist:${data.id}`} />}
       />
       <FlatList
         data={tracks}
@@ -139,12 +136,12 @@ export default function PlaylistScreen() {
         keyExtractor={(item, index) =>
           item.track?.id?.toString() || index.toString()
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <LibraryTrackRow
             title={item.track.name}
             subtitle={item.track.artists?.[0]?.name}
             imageUri={item.track.album?.images?.[0]?.url}
-            onPress={() => handlePlayTrack(item)}
+            onPress={() => handlePlayTrack(item.track?.id, index)}
             isActive={isLaunchingId === item.track?.id}
             rightElement={
               <Image

@@ -43,12 +43,12 @@ export default function AlbumScreen() {
     fetchTracks();
   }, [data.id]);
 
-  const handlePlayTrack = async (trackId: string) => {
+  const handlePlayTrack = async (trackId: string, index: number) => {
     try {
       setIsLaunchingId(trackId);
       await startPlayback({
         contextUri: `spotify:album:${data.id}`,
-        offsetUri: `spotify:track:${trackId}`,
+        offsetPosition: index,
       });
     } catch (error: any) {
       Alert.alert(
@@ -127,18 +127,18 @@ export default function AlbumScreen() {
             </TouchableOpacity>
           </>
         }
-        rightSlot={<PlayPauseButton />}
+        rightSlot={<PlayPauseButton contextUri={`spotify:album:${data.id}`} />}
       />
       <FlatList
         data={tracks}
         style={{ marginTop: 20 }}
         keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <LibraryTrackRow
             title={item.name}
             subtitle={item.artists?.[0]?.name}
             imageUri={data.images[0]?.url}
-            onPress={() => handlePlayTrack(item.id)}
+            onPress={() => handlePlayTrack(item.id, index)}
             isActive={isLaunchingId === item.id}
             rightElement={
               <Image

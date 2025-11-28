@@ -20,16 +20,22 @@ export default function ArtistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { artist: artistDetails, tracks, loading } = useArtist(id);
 
-  const handlePlay = useCallback(async (trackId: string) => {
-    try {
-      await startPlayback({ uris: [`spotify:track:${trackId}`] });
-    } catch (error: any) {
-      Alert.alert(
-        "Lecture impossible",
-        error?.message ?? "Réessaie plus tard."
-      );
-    }
-  }, []);
+  const handlePlay = useCallback(
+    async (trackId: string, index: number) => {
+      try {
+        await startPlayback({
+          contextUri: `spotify:artist:${id}`,
+          offsetPosition: index,
+        });
+      } catch (error: any) {
+        Alert.alert(
+          "Lecture impossible",
+          error?.message ?? "Réessaie plus tard."
+        );
+      }
+    },
+    [id]
+  );
 
   if (loading) {
     return (
@@ -88,18 +94,18 @@ export default function ArtistScreen() {
             </TouchableOpacity>
           </>
         }
-        rightSlot={<PlayPauseButton />}
+        rightSlot={<PlayPauseButton contextUri={`spotify:artist:${id}`} />}
       />
 
       <FlatList
         data={tracks}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <LibraryTrackRow
             title={item.name}
             subtitle={item.album?.name}
             imageUri={item.album?.images?.[0]?.url}
-            onPress={() => handlePlay(item.id)}
+            onPress={() => handlePlay(item.id, index)}
             rightElement={
               <Image
                 source={require("@/assets/images/icons/more.png")}

@@ -63,11 +63,12 @@ export default function TrackScreen() {
   );
 
   const actions = useMemo(() => baseActions, []);
+  const trackUri = data.uri || `spotify:track:${data.id}`;
 
   useEffect(() => {
     const autoplay = async () => {
       try {
-        await startPlayback({ uris: [`spotify:track:${data.id}`] });
+        await startPlayback({ uris: [trackUri] });
       } catch (error) {
         console.error("Failed to autoplay track", error);
       }
@@ -133,7 +134,7 @@ export default function TrackScreen() {
             </TouchableOpacity>
           </>
         }
-        rightSlot={<PlayPauseButton />}
+        rightSlot={<PlayPauseButton uris={[trackUri]} />}
       />
 
       <Text style={styles.sectionTitle}>Actions</Text>

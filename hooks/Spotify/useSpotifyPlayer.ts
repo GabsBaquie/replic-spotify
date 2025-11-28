@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
-
-const API_BASE = "https://api.spotify.com/v1";
+import { useCallback, useEffect, useState } from "react";
+import { remote } from "react-native-spotify-remote";
+import type RemotePlayerState from "react-native-spotify-remote/dist/PlayerState";
+import { ensureSpotifyRemoteSession } from "@/lib/spotify/remoteSession";
 
 export type TrackInfo = {
   name: string;
@@ -20,149 +19,94 @@ export type PlayerState = {
   contextUri: string | null;
 };
 
-/**
- * Hook pour piloter et récupérer l'état du playback Spotify.
- */
+const mapRemoteState = (playerState: RemotePlayerState): PlayerState => ({
+  playbackPosition: playerState.position,
+  trackDuration: playerState.duration,
+  isPaused: playerState.isPaused,
+  track: {
+    name: playerState.track.name,
+    artists: playerState.track.artist?.name
+      ? [playerState.track.artist.name]
+      : [],
+    artistIds: playerState.track.artist?.uri
+      ? [playerState.track.artist.uri]
+      : [],
+    albumArtUri: playerState.track.imageUri ?? null,
+    uri: playerState.track.uri,
+  },
+  contextUri: playerState.contextUri ?? null,
+});
+
 export default function useSpotifyPlayer() {
   const [state, setState] = useState<PlayerState | null>(null);
 
-  const fetchState = async () => {
+  const refresh = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem("spotify_access_token");
-      if (!token) throw new Error("Token Spotify manquant");
-
-      const res = await fetch(`${API_BASE}/me/player`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        if (res.status === 204 || res.status === 404) {
-          setState(null);
-          return;
-        }
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || `Erreur ${res.status}`);
-      }
-
-      if (res.status === 204) {
-        setState(null);
-        return;
-      }
-
-      const data = await res.json();
-
-      if (!data.item) {
-        setState(null);
-        return;
-      }
-
-      const track: TrackInfo = {
-        name: data.item.name,
-        artists: data.item.artists.map((a: any) => a.name),
-        artistIds: data.item.artists.map((a: any) => a.id),
-        albumArtUri:
-          data.item.album?.images?.[0]?.url ||
-          data.item.album?.images?.[1]?.url ||
-          null,
-        uri: data.item.uri,
-      };
-
-      setState({
-        playbackPosition: data.progress_ms || 0,
-        trackDuration: data.item.duration_ms || 0,
-        isPaused: data.is_playing === false,
-        track,
-        contextUri: data.context?.uri || null,
-      });
-    } catch (error: any) {
-      console.error("[useSpotifyPlayer] fetchState error:", error);
+      await ensureSpotifyRemoteSession();
+      const remoteState = await remote.getPlayerState();
+      setState(mapRemoteState(remoteState));
+    } catch (error) {
+      console.warn("[useSpotifyPlayer] refresh error:", error);
       setState(null);
     }
-  };
+  }, []);
 
-  const play = async (uri: string, position?: number) => {
-    try {
-      const token = await AsyncStorage.getItem("spotify_access_token");
-      if (!token) throw new Error("Token Spotify manquant");
+  useEffect(() => {
+    let subscription: { remove: () => void } | null = null;
 
-      const deviceId = await getLocalDeviceId();
+    const connect = async () => {
+      try {
+        await ensureSpotifyRemoteSession();
+        const currentState = await remote.getPlayerState();
+        setState(mapRemoteState(currentState));
 
-      await fetch(`${API_BASE}/me/player/play?device_id=${deviceId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          uris: [uri],
-          position_ms: position || 0,
-        }),
-      });
+        subscription = remote.addListener("playerStateChanged", (player) => {
+          setState(mapRemoteState(player));
+        });
+      } catch (error) {
+        console.warn("[useSpotifyPlayer] connexion impossible:", error);
+        setState(null);
+      }
+    };
 
-      await fetchState();
-    } catch (error: any) {
-      console.error("[useSpotifyPlayer] play error:", error);
-      throw error;
-    }
-  };
+    connect();
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
 
-  const pause = async () => {
-    try {
-      const token = await AsyncStorage.getItem("spotify_access_token");
-      if (!token) throw new Error("Token Spotify manquant");
+  const play = useCallback(
+    async (uri: string, position?: number) => {
+      await ensureSpotifyRemoteSession();
+      await remote.playUri(uri);
+      if (typeof position === "number" && position > 0) {
+        await remote.seek(position);
+      }
+      await refresh();
+    },
+    [refresh]
+  );
 
-      const deviceId = await getLocalDeviceId();
+  const pause = useCallback(async () => {
+    await ensureSpotifyRemoteSession();
+    await remote.pause();
+    await refresh();
+  }, [refresh]);
 
-      await fetch(`${API_BASE}/me/player/pause?device_id=${deviceId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  const resume = useCallback(async () => {
+    await ensureSpotifyRemoteSession();
+    await remote.resume();
+    await refresh();
+  }, [refresh]);
 
-      await fetchState();
-    } catch (error: any) {
-      console.error("[useSpotifyPlayer] pause error:", error);
-      throw error;
-    }
-  };
-
-  const resume = async () => {
-    try {
-      const token = await AsyncStorage.getItem("spotify_access_token");
-      if (!token) throw new Error("Token Spotify manquant");
-
-      const deviceId = await getLocalDeviceId();
-
-      await fetch(`${API_BASE}/me/player/play?device_id=${deviceId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      await fetchState();
-    } catch (error: any) {
-      console.error("[useSpotifyPlayer] resume error:", error);
-      throw error;
-    }
-  };
-
-  const togglePlayPause = async () => {
+  const togglePlayPause = useCallback(async () => {
     if (!state) return;
-
     if (state.isPaused) {
       await resume();
     } else {
       await pause();
     }
-  };
-
-  useEffect(() => {
-    fetchState();
-    const interval = setInterval(fetchState, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  }, [pause, resume, state]);
 
   return {
     state,
@@ -170,6 +114,6 @@ export default function useSpotifyPlayer() {
     pause,
     resume,
     togglePlayPause,
-    refresh: fetchState,
+    refresh,
   };
 }

@@ -48,10 +48,13 @@ export const LikedSongs = () => {
     fetchLikedTracks();
   }, []);
 
-  const handlePlayTrack = async (trackId: string) => {
+  const handlePlayTrack = async (trackId: string, index: number) => {
     try {
       setPlayingId(trackId);
-      await startPlayback({ uris: [`spotify:track:${trackId}`] });
+      await startPlayback({
+        contextUri: "spotify:collection:tracks",
+        offsetPosition: index,
+      });
     } catch (error: any) {
       Alert.alert(
         "Lecture impossible",
@@ -127,9 +130,7 @@ export const LikedSongs = () => {
           </>
         }
         rightSlot={
-          <PlayPauseButton
-            trackUris={tracks.map((track) => `spotify:track:${track.id}`)}
-          />
+          <PlayPauseButton contextUri="spotify:collection:tracks" />
         }
       />
 
@@ -137,13 +138,13 @@ export const LikedSongs = () => {
         data={tracks}
         keyExtractor={(track) => track.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <LibraryTrackRow
             title={item.name}
             subtitle={item.artists?.map((artist) => artist.name).join(", ")}
             imageUri={item.album?.images?.[0]?.url}
             fallbackColor="#4d2f9b"
-            onPress={() => handlePlayTrack(item.id)}
+            onPress={() => handlePlayTrack(item.id, index)}
             isActive={playingId === item.id}
             rightElement={
               <Image
