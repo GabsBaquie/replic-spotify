@@ -170,9 +170,11 @@ export default function DetailPlay({
           />
 
           <Box style={styles.header}>
-            <Box>
-              <Text style={styles.title}>{name}</Text>
-              <Text variant="caption" color="text" style={{ opacity: 0.5 }}>
+            <Box style={styles.headerTextContainer}>
+              <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+                {name}
+              </Text>
+              <Text variant="caption" color="text" style={{ opacity: 0.5 }} numberOfLines={1} ellipsizeMode="tail">
                 {artists[0]}
               </Text>
             </Box>
@@ -315,6 +317,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 30,
+  },
+  headerTextContainer: {
+    flex: 1,
+    marginRight: 10,
   },
   title: { fontSize: 20, fontWeight: "600", color: "#fff" },
   scroll: { width: "80%" },

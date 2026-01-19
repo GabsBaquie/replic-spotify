@@ -88,7 +88,7 @@ const CreatorHome = () => {
             if (parsed.photoUri) {
               setFallbackImageUri(parsed.photoUri);
             }
-          } catch (err) {
+          } catch {
             // Erreur silencieuse lors du chargement de l'image de fallback
           }
         }
@@ -240,7 +240,7 @@ const CreatorHome = () => {
                   source={{ uri: track.coverUri }}
                   style={styles.sliderCover}
                 />
-                <Text style={styles.sliderTitle} numberOfLines={1}>
+                <Text style={styles.sliderTitle} numberOfLines={1} ellipsizeMode="tail">
                   {track.title}
                 </Text>
                 <Text style={styles.badgeValidated}>Validé</Text>
@@ -268,7 +268,9 @@ const CreatorHome = () => {
                 style={styles.pendingCover}
               />
               <View style={styles.pendingInfo}>
-                <Text style={styles.pendingTitle}>{track.title}</Text>
+                <Text style={styles.pendingTitle} numberOfLines={1} ellipsizeMode="tail">
+                  {track.title}
+                </Text>
                 {track.coCreators.length > 0 && (
                   <Text style={styles.pendingCoCreators} numberOfLines={1}>
                     Avec {track.coCreators.join(", ")}
@@ -295,7 +297,9 @@ const CreatorHome = () => {
                 style={styles.pendingCover}
               />
               <View style={styles.pendingInfo}>
-                <Text style={styles.pendingTitle}>{track.title}</Text>
+                <Text style={styles.pendingTitle} numberOfLines={1} ellipsizeMode="tail">
+                  {track.title}
+                </Text>
                 {track.coCreators.length > 0 && (
                   <Text style={styles.pendingCoCreators} numberOfLines={1}>
                     Avec {track.coCreators.join(", ")}
