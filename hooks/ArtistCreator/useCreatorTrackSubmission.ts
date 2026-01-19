@@ -11,6 +11,7 @@ export const useCreatorTrackSubmission = () => {
   const [coverUri, setCoverUri] = useState<string | null>(null);
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [audioFileName, setAudioFileName] = useState<string | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null); // Stocker le File original sur web
   const [coCreators, setCoCreators] = useState<string[]>([]);
   const [coCreatorDraft, setCoCreatorDraft] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,13 +75,15 @@ export const useCreatorTrackSubmission = () => {
 
   const handleAudioFile = useCallback((file: File | { uri: string; name: string }) => {
     if (Platform.OS === "web" && file instanceof File) {
-      // Sur web, créer une URL temporaire pour le fichier
+      // Sur web, stocker le File original pour préserver le type MIME
       const url = URL.createObjectURL(file);
       setAudioUri(url);
       setAudioFileName(file.name || "audio.mp3");
+      setAudioFile(file); // Stocker le File original
     } else if ("uri" in file) {
       setAudioUri(file.uri);
       setAudioFileName(file.name || "audio.mp3");
+      setAudioFile(null); // Pas de File sur mobile
     }
   }, []);
 
@@ -122,21 +125,29 @@ export const useCreatorTrackSubmission = () => {
       if (!artist) {
         Alert.alert(
           "Profil artiste requis",
-          "Tu dois avoir un profil artiste validé pour envoyer une musique."
+          "Tu dois avoir un profil artiste pour envoyer une musique. Crée d'abord ton profil artiste."
         );
         setLoading(false);
         return;
       }
 
+      // L'artiste peut être en statut "pending", "validated" ou "refused"
+      // On permet l'envoi même si le statut est "pending"
+
       // Préparer les fichiers pour l'upload
-      // Pour React Native, on utilise les URIs directement
       const artistIds = [artist.id];
+
+      // Sur web, utiliser le File original si disponible pour préserver le type MIME
+      // Sinon utiliser l'URI (pour React Native)
+      const audioFileForUpload = Platform.OS === "web" && audioFile 
+        ? audioFile 
+        : audioUri;
 
       // Upload vers Supabase
       await createSong(
         title.trim(),
         coverUri, // URI de l'image
-        audioUri, // URI du fichier audio
+        audioFileForUpload, // File sur web, URI sur mobile
         artistIds,
         spotifyToken
       );
@@ -157,18 +168,27 @@ export const useCreatorTrackSubmission = () => {
       setCoverUri(null);
       setAudioUri(null);
       setAudioFileName(null);
+      setAudioFile(null);
       setCoCreators([]);
       setCoCreatorDraft("");
     } catch (error: any) {
-      console.error("[useCreatorTrackSubmission] Erreur:", error);
+      console.error("[useCreatorTrackSubmission] Erreur complète:", {
+        error,
+        message: error?.message,
+        stack: error?.stack,
+      });
+      
+      // Afficher un message d'erreur détaillé
+      const errorMessage = error?.message || "Impossible d'enregistrer ta musique.";
       Alert.alert(
         "Échec",
-        error?.message ?? "Impossible d'enregistrer ta musique."
+        errorMessage,
+        [{ text: "OK" }]
       );
     } finally {
       setLoading(false);
     }
-  }, [title, coverUri, audioUri, router]);
+  }, [title, coverUri, audioUri, audioFile, router]);
 
   return {
     state: {

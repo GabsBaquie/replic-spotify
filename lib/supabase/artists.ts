@@ -50,6 +50,7 @@ export const createArtist = async (
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${supabaseAnonKey}`,
       apikey: supabaseAnonKey,
       "X-Spotify-Token": spotifyToken,
     },
