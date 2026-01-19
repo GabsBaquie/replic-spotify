@@ -254,16 +254,62 @@ export const getArtistBySpotifyUserId = async (
   spotifyToken: string
 ): Promise<Artist | null> => {
   if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn(
+      "[getArtistBySpotifyUserId] Configuration Supabase manquante"
+    );
+    return null;
+  }
+
+  if (!spotifyToken) {
+    console.warn("[getArtistBySpotifyUserId] Token Spotify manquant");
     return null;
   }
 
   try {
     // Récupérer le spotify_user_id depuis l'API Spotify
-    const spotifyResponse = await fetch("https://api.spotify.com/v1/me", {
-      headers: { Authorization: `Bearer ${spotifyToken}` },
-    });
+    let spotifyResponse: Response;
+    try {
+      spotifyResponse = await fetch("https://api.spotify.com/v1/me", {
+        headers: { Authorization: `Bearer ${spotifyToken}` },
+      });
+    } catch (networkError: any) {
+      console.error(
+        "[getArtistBySpotifyUserId] Erreur réseau lors de l'appel à l'API Spotify:",
+        networkError.message || networkError
+      );
+      // Vérifier si c'est une erreur de connexion
+      if (
+        networkError.message?.includes("Network request failed") ||
+        networkError.message?.includes("Failed to fetch") ||
+        networkError.message?.includes("network")
+      ) {
+        throw new Error(
+          "Impossible de se connecter à l'API Spotify. Vérifie ta connexion internet."
+        );
+      }
+      throw networkError;
+    }
 
     if (!spotifyResponse.ok) {
+      const errorText = await spotifyResponse.text().catch(() => "");
+      let errorJson: any = null;
+      try {
+        errorJson = JSON.parse(errorText);
+      } catch {
+        // Ignore JSON parse errors
+      }
+
+      if (spotifyResponse.status === 401) {
+        console.warn(
+          "[getArtistBySpotifyUserId] Token Spotify invalide ou expiré (401)"
+        );
+        return null;
+      }
+
+      console.warn(
+        `[getArtistBySpotifyUserId] API Spotify erreur (${spotifyResponse.status}):`,
+        errorJson?.error?.message || errorText || "Erreur inconnue"
+      );
       return null;
     }
 
@@ -271,42 +317,115 @@ export const getArtistBySpotifyUserId = async (
     const spotifyUserId = spotifyUser.id;
 
     if (!spotifyUserId) {
+      console.warn(
+        "[getArtistBySpotifyUserId] spotify_user_id non trouvé dans la réponse Spotify"
+      );
       return null;
     }
 
-    // Utiliser l'Edge Function get-artist-by-id avec spotifyUserId
-    const response = await fetch(
-      `${supabaseUrl}/functions/v1/get-artist-by-id`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: supabaseAnonKey,
-          "X-Spotify-Token": spotifyToken,
-        },
-        body: JSON.stringify({ spotifyUserId }),
+    // Essayer d'abord l'Edge Function get-artist-by-id avec spotifyUserId
+    let edgeFunctionFailed = false;
+    let edgeFunctionError: any = null;
+
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/get-artist-by-id`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseAnonKey,
+            "X-Spotify-Token": spotifyToken,
+          },
+          body: JSON.stringify({ spotifyUserId }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.artist as Artist | null;
       }
-    );
 
-    if (response.ok) {
-      const result = await response.json();
-      return result.artist as Artist | null;
+      // Si 404, l'artiste n'existe peut-être pas, ou l'Edge Function n'est pas déployée
+      if (response.status === 404) {
+        edgeFunctionFailed = true;
+        console.warn(
+          "[getArtistBySpotifyUserId] Edge Function retourne 404, tentative avec requête directe Supabase"
+        );
+      } else {
+        // Pour les autres erreurs HTTP, logger mais continuer avec le fallback
+        const errorText = await response.text().catch(() => "Erreur inconnue");
+        let errorJson: any = null;
+        try {
+          errorJson = JSON.parse(errorText);
+        } catch {
+          // Ignore JSON parse errors
+        }
+        console.warn(
+          `[getArtistBySpotifyUserId] Edge Function erreur (${response.status}):`,
+          errorJson?.error || errorText
+        );
+        edgeFunctionFailed = true;
+      }
+    } catch (networkError: any) {
+      // Erreur réseau lors de l'appel à l'Edge Function
+      console.warn(
+        "[getArtistBySpotifyUserId] Erreur réseau lors de l'appel à l'Edge Function, tentative avec requête directe Supabase:",
+        networkError.message || networkError
+      );
+      edgeFunctionFailed = true;
+      edgeFunctionError = networkError;
     }
 
-    // Si 404, l'artiste n'existe pas
-    if (response.status === 404) {
+    // Fallback: interroger directement la table Supabase si l'Edge Function a échoué
+    if (edgeFunctionFailed) {
+      try {
+        const { data, error } = await supabase
+          .from("artists")
+          .select("*")
+          .eq("spotify_user_id", spotifyUserId)
+          .maybeSingle();
+
+        if (error) {
+          console.error(
+            "[getArtistBySpotifyUserId] Erreur requête directe Supabase:",
+            error
+          );
+          // Si c'est une erreur RLS, on peut quand même retourner null silencieusement
+          if (
+            error.message?.includes("row-level security") ||
+            error.code === "42501"
+          ) {
+            console.warn(
+              "[getArtistBySpotifyUserId] RLS bloque l'accès. Assure-toi que les policies RLS permettent la lecture."
+            );
+            return null;
+          }
+          return null;
+        }
+
+        return data as Artist | null;
+      } catch (fallbackError: any) {
+        console.error(
+          "[getArtistBySpotifyUserId] Erreur lors du fallback Supabase:",
+          fallbackError
+        );
+        // Si le fallback échoue aussi, retourner null
+        return null;
+      }
+    }
+
+    return null;
+  } catch (error: any) {
+    // Erreur lors de l'appel à l'API Spotify (pas de fallback possible)
+    if (
+      error.message?.includes("Impossible de se connecter à l'API Spotify")
+    ) {
+      console.error("[getArtistBySpotifyUserId] Erreur:", error.message);
+      // Ne pas lancer l'erreur, retourner null pour éviter de casser l'UI
       return null;
     }
-
-    // Pour les autres erreurs, logger et retourner null
-    const errorText = await response.text().catch(() => "Erreur inconnue");
-    console.warn(
-      `[getArtistBySpotifyUserId] Edge Function erreur (${response.status}):`,
-      errorText
-    );
-    return null;
-  } catch (error) {
-    console.error("[getArtistBySpotifyUserId] Erreur:", error);
+    console.error("[getArtistBySpotifyUserId] Erreur inattendue:", error);
     return null;
   }
 };

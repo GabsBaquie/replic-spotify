@@ -21,9 +21,17 @@ export const uploadFile = async (
 
   const extension = fileName.split(".").pop()?.toLowerCase() || "jpg";
   let mimeType = "image/jpeg";
+  // Images
   if (extension === "png") mimeType = "image/png";
   else if (extension === "webp") mimeType = "image/webp";
   else if (extension === "gif") mimeType = "image/gif";
+  // Audio
+  else if (extension === "mp3") mimeType = "audio/mpeg";
+  else if (extension === "m4a") mimeType = "audio/mp4";
+  else if (extension === "wav") mimeType = "audio/wav";
+  else if (extension === "aac") mimeType = "audio/aac";
+  else if (extension === "ogg") mimeType = "audio/ogg";
+  else if (extension === "flac") mimeType = "audio/flac";
 
   const formData = new FormData();
 
