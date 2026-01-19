@@ -297,10 +297,19 @@ const getSongUrl = async (songUrl: string | null): Promise<string | null> => {
   
   // Sinon, c'est un path dans le bucket tracks (privé), on génère une URL signée
   try {
-    const signedUrl = await getSignedUrl("tracks", songUrl, 3600); // 1 heure
+    // Nettoyer le path : enlever le préfixe "tracks/" s'il est présent (car on spécifie déjà le bucket)
+    let cleanPath = songUrl;
+    if (cleanPath.startsWith("tracks/")) {
+      cleanPath = cleanPath.replace("tracks/", "");
+    }
+    
+    const signedUrl = await getSignedUrl("tracks", cleanPath, 3600); // 1 heure
     return signedUrl;
   } catch (error: any) {
-    console.error("[getSongUrl] Erreur génération URL signée:", error);
+    // Si le fichier n'existe pas, ne pas bloquer l'affichage de la chanson
+    console.warn(
+      `[getSongUrl] Fichier audio non trouvé: ${songUrl}. Erreur: ${error?.message || "Object not found"}`
+    );
     return null;
   }
 };
@@ -410,6 +419,20 @@ export const getSongsByArtistId = async (artistId: string): Promise<SongWithArti
 
     if (songArtistsError) {
       console.error("[getSongsByArtistId] Erreur songs_artists:", songArtistsError);
+      
+      // Si c'est une erreur "Invalid API key", c'est probablement un problème de RLS
+      if (
+        songArtistsError.message?.includes("Invalid API key") ||
+        songArtistsError.code === "PGRST301"
+      ) {
+        throw new Error(
+          `❌ Erreur d'accès à la table 'songs_artists': ${songArtistsError.message}\n\n` +
+          `🔧 Solution: Vérifie que la policy RLS "Allow read on songs_artists" existe bien.\n` +
+          `   Exécute ce SQL dans Supabase Dashboard > SQL Editor:\n` +
+          `   CREATE POLICY "Allow read on songs_artists" ON songs_artists FOR SELECT USING (true);`
+        );
+      }
+      
       throw songArtistsError;
     }
 
