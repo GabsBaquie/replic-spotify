@@ -23,7 +23,6 @@ export default function Onboarding() {
       const tokenData = await getAccessToken();
       if (tokenData?.accessToken) {
         await AsyncStorage.setItem('spotify_access_token', tokenData.accessToken);
-        console.log('Token Spotify stocké :', tokenData.accessToken);
         router.push('/(tabs)/home');
       }
     };

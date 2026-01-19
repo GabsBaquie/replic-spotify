@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Box, Text } from "@/components/restyle";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import useSupabasePlayer from "@/hooks/Player/useSupabasePlayer";
 import { getSignedUrl } from "@/lib/supabase/storage";
 import { getStoragePath } from "@/lib/supabase/utils";
@@ -37,6 +37,9 @@ export default function DetailPlay({
   const router = useRouter();
   const supabasePlayer = useSupabasePlayer();
   const [finalUri, setFinalUri] = useState<string | null>(initialUri);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [, forceUpdate] = useState(0);
+  const autoPlayTriggeredRef = useRef(false); // Pour éviter que le lancement automatique se déclenche plusieurs fois
 
   // Générer l'URL signée si l'URI est un path Supabase (pas Spotify)
   useEffect(() => {
@@ -77,6 +80,13 @@ export default function DetailPlay({
     generateSignedUrl();
   }, [initialUri]);
 
+  // Réinitialiser le flag quand la popup se ferme
+  useEffect(() => {
+    if (!visible) {
+      autoPlayTriggeredRef.current = false;
+    }
+  }, [visible]);
+
   // Démarrer la lecture automatiquement quand la popup s'ouvre (uniquement pour les tracks Supabase)
   useEffect(() => {
     if (!visible || !finalUri) return;
@@ -86,21 +96,40 @@ export default function DetailPlay({
     const isSupabaseUrl = finalUri.startsWith("http://") || finalUri.startsWith("https://");
     if (!isSupabaseUrl) return;
     
+    // Éviter de lancer plusieurs fois
+    if (autoPlayTriggeredRef.current) return;
+    
     const currentTrack = supabasePlayer.state?.track;
     const isAlreadyPlaying = currentTrack?.uri === finalUri && !supabasePlayer.state?.isPaused;
-    if (isAlreadyPlaying) return;
+    if (isAlreadyPlaying) {
+      autoPlayTriggeredRef.current = true;
+      return;
+    }
     
     const playTrack = async () => {
       try {
+        autoPlayTriggeredRef.current = true; // Marquer comme déclenché AVANT le play
         const trackWithFinalUri: TrackInfo = { ...track, uri: finalUri };
         await supabasePlayer.play(trackWithFinalUri);
       } catch {
-        // Erreur silencieuse, l'utilisateur peut utiliser le bouton Play manuel
+        // En cas d'erreur, réinitialiser le flag pour permettre un nouvel essai
+        autoPlayTriggeredRef.current = false;
       }
     };
     
     playTrack();
   }, [visible, finalUri, track, supabasePlayer]);
+
+  // Forcer la mise à jour de l'UI quand l'état du player change
+  useEffect(() => {
+    if (!visible) return;
+    
+    const interval = setInterval(() => {
+      forceUpdate((prev) => prev + 1);
+    }, 500); // Mise à jour toutes les 500ms pour l'icône
+    
+    return () => clearInterval(interval);
+  }, [visible, supabasePlayer.state]);
 
   const actions = [
     {
@@ -150,22 +179,66 @@ export default function DetailPlay({
             <View style={{ flexDirection: "row", gap: 10 }}>
               {/* Bouton Play/Pause */}
               <TouchableOpacity
-                onPress={() => {
+                disabled={!finalUri || !finalUri.startsWith("http")}
+                onPress={async () => {
                   // Ne gérer que les tracks Supabase (http/https), pas les tracks Spotify
-                  if (!finalUri || !finalUri.startsWith("http")) return;
+                  if (!finalUri || !finalUri.startsWith("http")) {
+                    return;
+                  }
                   
-                  const trackWithFinalUri: TrackInfo = { ...track, uri: finalUri };
-                  if (supabasePlayer.state?.isPaused || !supabasePlayer.state) {
-                    supabasePlayer.play(trackWithFinalUri).catch(() => {});
-                  } else {
-                    supabasePlayer.pause().catch(() => {});
+                  // Éviter les doubles clics rapides
+                  if (isPlaying) {
+                    return;
+                  }
+                  
+                  setIsPlaying(true);
+                  
+                  // Réinitialiser le flag autoPlay pour permettre les interactions manuelles
+                  autoPlayTriggeredRef.current = false;
+                  
+                  try {
+                    const currentTrack = supabasePlayer.state?.track;
+                    const isCurrentTrack = currentTrack?.uri === finalUri;
+                    const isPaused = supabasePlayer.state?.isPaused;
+                    
+                    if (isCurrentTrack) {
+                      // Si c'est le même track, toggle play/pause directement
+                      if (isPaused) {
+                        await supabasePlayer.resume();
+                      } else {
+                        await supabasePlayer.pause();
+                      }
+                    } else {
+                      // Si c'est un autre track, lancer la lecture
+                      const trackWithFinalUri: TrackInfo = { ...track, uri: finalUri };
+                      await supabasePlayer.play(trackWithFinalUri);
+                    }
+                    
+                    // Réinitialiser immédiatement après l'action pour permettre les clics suivants
+                    setIsPlaying(false);
+                  } catch {
+                    setIsPlaying(false);
                   }
                 }}
                 style={styles.playButton}
               >
-                <Text style={styles.playButtonText}>
-                  {supabasePlayer.state?.isPaused || !supabasePlayer.state ? "▶" : "⏸"}
-                </Text>
+                {(() => {
+                  const currentTrack = supabasePlayer.state?.track;
+                  const isCurrentTrack = currentTrack?.uri === finalUri;
+                  const isPaused = supabasePlayer.state?.isPaused ?? true;
+                  
+                  const iconSource = isCurrentTrack && !isPaused 
+                    ? require("@/assets/images/icons/pause.png")
+                    : require("@/assets/images/icons/play.png");
+                  
+                  return (
+                    <Image
+                      source={iconSource}
+                      style={styles.playButtonIcon}
+                      resizeMode="contain"
+                    />
+                  );
+                })()}
               </TouchableOpacity>
               <TouchableOpacity>
                 <Image
@@ -256,10 +329,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  playButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+  playButtonIcon: {
+    width: 20,
+    height: 20,
+    tintColor: "#fff",
   },
   closeButton: {
     alignItems: "center",

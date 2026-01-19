@@ -16,6 +16,7 @@ export default function useSupabasePlayer() {
   const [state, setState] = useState<SupabasePlayerState | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const positionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isManualActionRef = useRef(false); // Flag pour éviter que setOnPlaybackStatusUpdate écrase les actions manuelles
 
   const updatePosition = async () => {
     if (!soundRef.current || !state) return;
@@ -40,6 +41,17 @@ export default function useSupabasePlayer() {
 
   const play = async (track: TrackInfo) => {
     try {
+      // Si c'est déjà le même track en cours de lecture et qu'il n'est pas en pause, ne rien faire
+      if (state?.track?.uri === track.uri && !state.isPaused) {
+        return;
+      }
+
+      // Si c'est le même track mais en pause, reprendre la lecture
+      if (state?.track?.uri === track.uri && state.isPaused && soundRef.current) {
+        await resume();
+        return;
+      }
+
       // Arrêter la lecture précédente si elle existe
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
@@ -102,15 +114,30 @@ export default function useSupabasePlayer() {
               positionIntervalRef.current = null;
             }
           } else {
-            setState((prev) => {
-              if (!prev) return null;
-              return {
-                ...prev,
-                playbackPosition: status.positionMillis || 0,
-                trackDuration: status.durationMillis || prev.trackDuration,
-                isPaused: !status.isPlaying,
-              };
-            });
+            const newIsPaused = !status.isPlaying;
+            
+            // Ne pas écraser l'état si on vient de faire une action manuelle
+            if (isManualActionRef.current) {
+              setState((prev) => {
+                if (!prev) return null;
+                return {
+                  ...prev,
+                  playbackPosition: status.positionMillis || 0,
+                  trackDuration: status.durationMillis || prev.trackDuration,
+                  // Garder isPaused tel quel
+                };
+              });
+            } else {
+              setState((prev) => {
+                if (!prev) return null;
+                return {
+                  ...prev,
+                  playbackPosition: status.positionMillis || 0,
+                  trackDuration: status.durationMillis || prev.trackDuration,
+                  isPaused: newIsPaused,
+                };
+              });
+            }
           }
         }
       });
@@ -120,40 +147,83 @@ export default function useSupabasePlayer() {
   };
 
   const pause = async () => {
-    if (!soundRef.current) return;
+    if (!soundRef.current) {
+      return;
+    }
 
     try {
+      // Vérifier que le son est chargé avant d'essayer de le mettre en pause
+      const status = await soundRef.current.getStatusAsync();
+      if (!status.isLoaded) {
+        return;
+      }
+
+      isManualActionRef.current = true;
       await soundRef.current.pauseAsync();
+      
       setState((prev) => {
         if (!prev) return null;
         return { ...prev, isPaused: true };
       });
+      
+      // Réinitialiser le flag après un délai pour éviter que setOnPlaybackStatusUpdate écrase l'état
+      setTimeout(() => {
+        isManualActionRef.current = false;
+      }, 1000);
     } catch {
-      // Erreur silencieuse lors de la pause
+      isManualActionRef.current = false;
     }
   };
 
   const resume = async () => {
-    if (!soundRef.current) return;
+    if (!soundRef.current) {
+      return;
+    }
 
     try {
+      // Vérifier que le son est chargé avant d'essayer de le reprendre
+      const status = await soundRef.current.getStatusAsync();
+      if (!status.isLoaded) {
+        return;
+      }
+
+      isManualActionRef.current = true;
       await soundRef.current.playAsync();
+      
       setState((prev) => {
         if (!prev) return null;
         return { ...prev, isPaused: false };
       });
+      
+      // Réinitialiser le flag après un délai pour éviter que setOnPlaybackStatusUpdate écrase l'état
+      setTimeout(() => {
+        isManualActionRef.current = false;
+      }, 1000);
     } catch {
-      // Erreur silencieuse lors de la reprise
+      isManualActionRef.current = false;
     }
   };
 
   const togglePlayPause = async () => {
-    if (!state) return;
+    if (!soundRef.current || !state) return;
 
-    if (state.isPaused) {
-      await resume();
-    } else {
-      await pause();
+    try {
+      // Vérifier directement le statut du son pour être sûr
+      const status = await soundRef.current.getStatusAsync();
+      if (status.isLoaded) {
+        if (status.isPlaying) {
+          await pause();
+        } else {
+          await resume();
+        }
+      }
+    } catch {
+      // Si erreur, utiliser l'état comme fallback
+      if (state.isPaused) {
+        await resume();
+      } else {
+        await pause();
+      }
     }
   };
 
@@ -175,7 +245,7 @@ export default function useSupabasePlayer() {
   useEffect(() => {
     return () => {
       if (soundRef.current) {
-        soundRef.current.unloadAsync().catch(console.error);
+        soundRef.current.unloadAsync().catch(() => {});
       }
       if (positionIntervalRef.current) {
         clearInterval(positionIntervalRef.current);
