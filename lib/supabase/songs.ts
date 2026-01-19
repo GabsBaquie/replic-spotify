@@ -6,7 +6,7 @@ import type {
   SongStatus,
 } from "./types";
 import { uploadFile, getSignedUrl } from "./storage";
-import { toStoragePath, mapSongRows, sanitizeFileName, generateUniqueImageName } from "./utils";
+import { toStoragePath, mapSongRows, sanitizeFileName, generateUniqueImageName, getStoragePath } from "./utils";
 
 export const createSong = async (
   title: string,
@@ -15,39 +15,21 @@ export const createSong = async (
   artistIds: string[],
   spotifyToken: string
 ) => {
-  console.log("[createSong] Début de la création:", {
-    title,
-    artistIds,
-    imageFileType: imageFile instanceof File ? "File" : imageFile instanceof Blob ? "Blob" : typeof imageFile,
-    audioFileType: audioFile instanceof File ? "File" : audioFile instanceof Blob ? "Blob" : typeof audioFile,
-  });
-
   let coverResult: { url: string; path: string };
   let audioResult: { url: string; path: string };
 
   try {
-    // Préparer les fichiers pour l'upload
-    // uploadFile gère déjà les URIs locales (string), Blob, File
-    // On doit juste convertir ArrayBuffer en Blob si nécessaire
-    
     const coverForUpload: string | Blob | File =
-      imageFile instanceof ArrayBuffer
-        ? new Blob([imageFile])
-        : imageFile;
+      imageFile instanceof ArrayBuffer ? new Blob([imageFile]) : imageFile;
     
     const audioForUpload: string | Blob | File =
-      audioFile instanceof ArrayBuffer
-        ? new Blob([audioFile])
-        : audioFile;
+      audioFile instanceof ArrayBuffer ? new Blob([audioFile]) : audioFile;
     
-    console.log("[createSong] Upload de la cover...");
-    // Nettoyer le titre pour la cover (sans timestamp, generateUniqueImageName l'ajoutera)
     const cleanedTitle = title.trim()
       .replace(/\s+/g, "_")
       .replace(/[^a-zA-Z0-9_-]/g, "")
       .substring(0, 50) || "cover";
     
-    // Générer un nom unique pour la cover basé sur le titre
     const coverFileName = generateUniqueImageName(
       cleanedTitle,
       typeof File !== "undefined" && imageFile instanceof File
@@ -55,26 +37,22 @@ export const createSong = async (
         : undefined,
       "jpg"
     );
+    
     coverResult = await uploadFile(
       "albums_images",
       toStoragePath("songs", coverFileName),
       coverForUpload,
-      spotifyToken
-    );
-    console.log("[createSong] Cover uploadée:", coverResult.url);
+    spotifyToken
+  );
 
-    console.log("[createSong] Upload de l'audio...");
-    // Utiliser le titre de la chanson comme nom de fichier
     const audioFileName = sanitizeFileName(title.trim(), "mp3");
     audioResult = await uploadFile(
       "tracks",
       toStoragePath("tracks", audioFileName),
       audioForUpload,
-      spotifyToken
-    );
-    console.log("[createSong] Audio uploadé:", audioResult.path);
+    spotifyToken
+  );
   } catch (uploadError: any) {
-    console.error("[createSong] Erreur lors de l'upload:", uploadError);
     throw new Error(
       `Erreur lors de l'upload des fichiers: ${uploadError?.message || "Erreur inconnue"}`
     );
@@ -97,40 +75,28 @@ export const createSong = async (
       },
       body: JSON.stringify({
         title,
-        image_url: coverResult.url,
-        song_url: audioResult.path,
+        image_url: coverResult.url, // URL publique complète
+        song_url: audioResult.url, // URL signée complète (comme image_url)
         artist_ids: artistIds,
       }),
     });
   } catch (networkError: any) {
-    console.error("[createSong] Erreur réseau lors de l'appel Edge Function:", networkError);
     throw new Error(
       `Erreur réseau lors de l'appel à l'Edge Function 'create-song': ${networkError?.message || "Network request failed"}. Vérifie ta connexion internet.`
     );
   }
-
-  console.log("[createSong] Réponse Edge Function:", {
-    status: response.status,
-    ok: response.ok,
-    contentType: response.headers.get("content-type"),
-  });
 
   let result: any;
   const contentType = response.headers.get("content-type");
   if (contentType?.includes("application/json")) {
     try {
       result = await response.json();
-      console.log("[createSong] Réponse JSON parsée:", result);
     } catch (parseError) {
-      // Si le JSON est invalide
       const text = await response.text().catch(() => "Erreur inconnue");
-      console.error("[createSong] Erreur parsing JSON:", parseError, "Response text:", text);
       throw new Error(`Création song échouée (${response.status}): ${text}`);
     }
   } else {
-    // Si la réponse n'est pas du JSON
     const text = await response.text().catch(() => "Erreur inconnue");
-    console.warn("[createSong] Réponse non-JSON:", response.status, text);
     if (response.status === 404 || response.status === 401) {
       result = { 
         error: response.status === 404 
@@ -143,43 +109,20 @@ export const createSong = async (
   }
 
   if (!response.ok) {
-    console.log("[createSong] Réponse non-OK, status:", response.status, "result:", result);
-    
-    // Si l'Edge Function n'est pas déployée (404) ou si JWT invalide (401), essayer avec l'API directe
     if (response.status === 404 || response.status === 401) {
-      const reason = response.status === 404 
-        ? "non déployée (404)" 
-        : "JWT invalide - 'Verify JWT' est probablement activé (401)";
-      console.warn(
-        `[createSong] Edge Function 'create-song' ${reason}, tentative avec API directe`
-      );
-      
-      if (response.status === 401) {
-        console.warn(
-          "[createSong] Pour utiliser l'Edge Function, désactive 'Verify JWT' dans Supabase Dashboard > Edge Functions > create-song > Settings"
-        );
-      }
-      
-      const { data: song, error: songError } = await supabase
-        .from("songs")
-        .insert({
-          title,
-          image_url: coverResult.url,
-          song_url: audioResult.path,
-          status: "pending" satisfies SongStatus,
-        })
-        .select("*")
-        .single();
+
+  const { data: song, error: songError } = await supabase
+    .from("songs")
+    .insert({
+      title,
+              image_url: coverResult.url, // URL publique complète
+              song_url: audioResult.url, // URL signée complète (comme image_url)
+      status: "pending" satisfies SongStatus,
+    })
+    .select("*")
+    .single();
 
       if (songError || !song) {
-        console.error("[createSong] Erreur Supabase directe:", {
-          error: songError,
-          message: songError?.message,
-          code: songError?.code,
-          details: songError?.details,
-          hint: songError?.hint,
-        });
-        
         // Vérifier si c'est une erreur de clé API invalide
         if (
           songError?.message?.includes("Invalid API key") ||
@@ -231,36 +174,27 @@ export const createSong = async (
       }
 
       // Insérer les associations songs_artists
-      if (artistIds.length) {
-        const { error: junctionError } = await supabase
-          .from("songs_artists")
-          .insert(
-            artistIds.map((artist_id) => ({
-              song_id: song.id,
-              artist_id,
-            }))
-          );
+  if (artistIds.length) {
+    const { error: junctionError } = await supabase
+      .from("songs_artists")
+      .insert(
+        artistIds.map((artist_id) => ({
+          song_id: song.id,
+          artist_id,
+        }))
+      );
         if (junctionError) {
-          console.error("[createSong] Erreur insertion songs_artists:", junctionError);
           throw new Error(
             `Association song/artists échouée: ${junctionError.message || JSON.stringify(junctionError)}`
           );
         }
       }
 
-      console.log("[createSong] Song créé avec succès via API directe:", song.id);
       return song as Song;
     }
     
-    // Autre erreur de l'Edge Function
     const errorMessage = result?.error || result?.message || `Erreur ${response.status}`;
-    console.error("[createSong] Erreur Edge Function:", {
-      status: response.status,
-      result,
-      errorMessage,
-    });
     
-    // Message d'erreur amélioré pour les erreurs 401 (Invalid JWT)
     if (response.status === 401) {
       throw new Error(
         `❌ Erreur d'authentification JWT (401): L'Edge Function 'create-song' rejette la requête.\n\n` +
@@ -278,38 +212,26 @@ export const createSong = async (
   }
 
   if (!result.data) {
-    console.error("[createSong] Réponse Edge Function sans data:", result);
     throw new Error(`Création song échouée: Réponse invalide de l'Edge Function`);
   }
 
-  console.log("[createSong] Song créé avec succès via Edge Function:", result.data.id);
   return result.data as Song;
 };
 
-// Convertit le song_url (path) en URL signée pour le bucket privé tracks
 const getSongUrl = async (songUrl: string | null): Promise<string | null> => {
   if (!songUrl) return null;
   
-  // Si c'est déjà une URL complète (http/https), on la retourne telle quelle
   if (songUrl.startsWith("http://") || songUrl.startsWith("https://")) {
     return songUrl;
   }
   
-  // Sinon, c'est un path dans le bucket tracks (privé), on génère une URL signée
   try {
-    // Nettoyer le path : enlever le préfixe "tracks/" s'il est présent (car on spécifie déjà le bucket)
-    let cleanPath = songUrl;
-    if (cleanPath.startsWith("tracks/")) {
-      cleanPath = cleanPath.replace("tracks/", "");
-    }
+    const storagePath = getStoragePath(songUrl);
+    if (!storagePath) return null;
     
-    const signedUrl = await getSignedUrl("tracks", cleanPath, 3600); // 1 heure
+    const signedUrl = await getSignedUrl("tracks", storagePath, 3600);
     return signedUrl;
-  } catch (error: any) {
-    // Si le fichier n'existe pas, ne pas bloquer l'affichage de la chanson
-    console.warn(
-      `[getSongUrl] Fichier audio non trouvé: ${songUrl}. Erreur: ${error?.message || "Object not found"}`
-    );
+  } catch (error) {
     return null;
   }
 };
@@ -418,8 +340,6 @@ export const getSongsByArtistId = async (artistId: string): Promise<SongWithArti
       .eq("artist_id", artistId);
 
     if (songArtistsError) {
-      console.error("[getSongsByArtistId] Erreur songs_artists:", songArtistsError);
-      
       // Si c'est une erreur "Invalid API key", c'est probablement un problème de RLS
       if (
         songArtistsError.message?.includes("Invalid API key") ||
@@ -458,8 +378,6 @@ export const getSongsByArtistId = async (artistId: string): Promise<SongWithArti
       .in("id", songIds);
 
     if (error) {
-      console.error("[getSongsByArtistId] Erreur Supabase:", error);
-      
       // Vérifier si c'est une erreur de clé API invalide
       if (
         error.message?.includes("Invalid API key") ||
@@ -516,12 +434,17 @@ export const getSongsByArtistId = async (artistId: string): Promise<SongWithArti
     
     const mappedSongs = mapSongRows(data) as SongWithArtists[];
     
-    // Convertir les song_url en URLs signées
     const songsWithSignedUrls = await Promise.all(
-      mappedSongs.map(async (song) => ({
-        ...song,
-        song_url: await getSongUrl(song.song_url),
-      }))
+      mappedSongs.map(async (song) => {
+        const originalPath = song.song_url;
+        const signedUrl = await getSongUrl(originalPath);
+        const finalUrl = signedUrl || originalPath || null;
+        
+        return {
+          ...song,
+          song_url: finalUrl,
+        };
+      })
     );
     
     return songsWithSignedUrls;

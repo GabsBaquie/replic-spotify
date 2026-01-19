@@ -7,7 +7,10 @@ type CreatorTrack = {
   id: string;
   title: string;
   coverUri: string;
+  songUrl: string | null;
   coCreators: string[];
+  artistIds: string[];
+  artists: string[];
   status: "pending" | "validated" | "refused";
   createdAt: string;
 };
@@ -16,6 +19,10 @@ const CREATOR_ARTIST_ID_KEY = "creator_artist_id";
 
 // Convertit SongWithArtists en CreatorTrack
 const convertSongToTrack = (song: SongWithArtists): CreatorTrack => {
+  // Récupérer les noms des artistes
+  const artists = song.artists.map((artist) => artist.name);
+  const artistIds = song.artists.map((artist) => artist.id);
+  
   // Récupérer les noms des co-créateurs (tous les artistes sauf le premier)
   const coCreators = song.artists.slice(1).map((artist) => artist.name);
   
@@ -23,7 +30,10 @@ const convertSongToTrack = (song: SongWithArtists): CreatorTrack => {
     id: song.id,
     title: song.title,
     coverUri: song.image_url || "",
+    songUrl: song.song_url,
     coCreators,
+    artistIds,
+    artists,
     status: song.status,
     createdAt: song.created_at,
   };

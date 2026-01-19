@@ -13,12 +13,17 @@ import { Box, Text } from "@/components/restyle";
 import { useProfile } from "@/hooks/Spotify";
 import { useRouter } from "expo-router";
 import { RestyleButton } from "@/components/RestyleButton";
-import { useCreatorTracks } from "@/hooks/ArtistCreator/useCreatorTracks";
+import { useCreatorTracks, type CreatorTrack } from "@/hooks/ArtistCreator/useCreatorTracks";
 import { useCreatorProfile } from "@/hooks/ArtistCreator/useCreatorProfile";
+import DetailPlay, { TrackInfo } from "@/features/player/DetailPlay";
+import { getSignedUrl } from "@/lib/supabase/storage";
+import { getStoragePath } from "@/lib/supabase/utils";
 
 const CreatorHome = () => {
   const { artist, loading } = useCreatorProfile();
   const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState<TrackInfo | null>(null);
+  const [isDetailPlayVisible, setDetailPlayVisible] = useState(false);
   const { profile: spotifyProfile, isLoading: spotifyLoading } = useProfile();
   const {
     loading: tracksLoading,
@@ -27,6 +32,44 @@ const CreatorHome = () => {
     rejectedTracks,
   } = useCreatorTracks();
   const router = useRouter();
+
+  const convertToTrackInfo = (track: CreatorTrack, signedUrl?: string | null): TrackInfo => {
+    const uri = signedUrl !== undefined ? (signedUrl || "") : (track.songUrl || "");
+    
+    return {
+      name: track.title,
+      artists: track.artists.length > 0 
+        ? track.artists 
+        : track.coCreators.length > 0 
+        ? track.coCreators 
+        : ["Artiste inconnu"],
+      artistIds: track.artistIds.length > 0 ? track.artistIds : [],
+      albumArtUri: track.coverUri,
+      uri,
+    };
+  };
+
+  const handleTrackPress = async (track: CreatorTrack) => {
+    let finalUri: string | null = track.songUrl;
+    
+    if (finalUri && !finalUri.startsWith("http://") && !finalUri.startsWith("https://")) {
+      const storagePath = getStoragePath(finalUri);
+      
+      if (storagePath) {
+        try {
+          finalUri = await getSignedUrl("tracks", storagePath, 3600);
+        } catch (error: any) {
+          finalUri = error?.message?.includes("Object not found") ? track.songUrl : null;
+        }
+      } else {
+        finalUri = track.songUrl;
+      }
+    }
+    
+    const trackInfo = convertToTrackInfo(track, finalUri);
+    setSelectedTrack(trackInfo);
+    setDetailPlayVisible(true);
+  };
 
   // image_url contient déjà l'URL publique complète depuis Supabase
   // Fallback vers photoUri depuis AsyncStorage si image_url est null
@@ -44,7 +87,7 @@ const CreatorHome = () => {
               setFallbackImageUri(parsed.photoUri);
             }
           } catch (err) {
-            console.error("[CreatorHome] Erreur parsing fallback:", err);
+            // Erreur silencieuse lors du chargement de l'image de fallback
           }
         }
       };
@@ -164,7 +207,12 @@ const CreatorHome = () => {
             contentContainerStyle={styles.slider}
           >
             {validatedTracks.map((track) => (
-              <View key={track.id} style={styles.sliderCard}>
+              <TouchableOpacity
+                key={track.id}
+                style={styles.sliderCard}
+                onPress={() => handleTrackPress(track)}
+                activeOpacity={0.7}
+              >
                 <Image
                   source={{ uri: track.coverUri }}
                   style={styles.sliderCover}
@@ -173,7 +221,7 @@ const CreatorHome = () => {
                   {track.title}
                 </Text>
                 <Text style={styles.badgeValidated}>Validé</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         ) : (
@@ -319,6 +367,18 @@ const CreatorHome = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Popup DetailPlay pour les chansons */}
+      {selectedTrack && (
+        <DetailPlay
+          visible={isDetailPlayVisible}
+          onClose={() => {
+            setDetailPlayVisible(false);
+            setSelectedTrack(null);
+          }}
+          track={selectedTrack}
+        />
+      )}
     </View>
   );
 };

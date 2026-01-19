@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useSpotifyPlayer from "@/hooks/Spotify/useSpotifyPlayer";
+import useSupabasePlayer from "@/hooks/Player/useSupabasePlayer";
 
 interface NowPlayingBarProps {
   backgroundColor?: ColorValue;
@@ -22,7 +23,14 @@ export default function NowPlayingBar({
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const { state, togglePlayPause } = useSpotifyPlayer();
+  const spotifyPlayer = useSpotifyPlayer();
+  const supabasePlayer = useSupabasePlayer();
+
+  // Priorité à Supabase si une chanson est en cours, sinon Spotify
+  const state = supabasePlayer.state || spotifyPlayer.state;
+  const togglePlayPause = supabasePlayer.state
+    ? supabasePlayer.togglePlayPause
+    : spotifyPlayer.togglePlayPause;
 
   if (!state) return null;
 

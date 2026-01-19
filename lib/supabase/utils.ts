@@ -64,6 +64,28 @@ export const toStoragePath = (prefix: string, filename: string) => {
   return `${prefix}/${safeName}`;
 };
 
+/**
+ * Convertit le path stocké dans la DB en path réel dans Supabase Storage.
+ * Gère la compatibilité avec les anciens paths qui nécessitent un double préfixe.
+ */
+export const getStoragePath = (dbPath: string | null): string | null => {
+  if (!dbPath) return null;
+  
+  if (dbPath.startsWith("http://") || dbPath.startsWith("https://")) {
+    return dbPath;
+  }
+  
+  if (dbPath.startsWith("tracks/tracks/")) {
+    return dbPath;
+  }
+  
+  if (dbPath.startsWith("tracks/")) {
+    return `tracks/${dbPath}`;
+  }
+  
+  return `tracks/tracks/${dbPath}`;
+};
+
 export const mapSongRows = (
   rows: any[],
   options: { onlyValidatedArtists?: boolean } = {}
