@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
+  RefreshControl,
 } from "react-native";
 import { Box, Text } from "@/components/restyle";
 import { useProfile } from "@/hooks/Spotify";
@@ -30,6 +31,7 @@ const CreatorHome = () => {
     validatedTracks,
     pendingTracks,
     rejectedTracks,
+    refresh: refreshTracks,
   } = useCreatorTracks();
   const router = useRouter();
 
@@ -100,6 +102,7 @@ const CreatorHome = () => {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const hasTriedFallback = useRef(false); // Mémorise qu'on a déjà tenté le fallback
+  const [refreshing, setRefreshing] = useState(false);
 
   // Priorité : image_url depuis Supabase > fallback photoUri > null
   // Si on a déjà tenté le fallback, utiliser directement le fallback
@@ -107,6 +110,15 @@ const CreatorHome = () => {
     hasTriedFallback.current || imageError
       ? fallbackImageUri
       : artist?.image_url || fallbackImageUri;
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshTracks();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -132,7 +144,18 @@ const CreatorHome = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#1DB954"
+          colors={["#1DB954"]}
+        />
+      }
+    >
       <TouchableOpacity
         style={styles.creatorRow}
         onPress={() => setModalVisible(true)}
@@ -379,7 +402,7 @@ const CreatorHome = () => {
           track={selectedTrack}
         />
       )}
-    </View>
+    </ScrollView>
   );
 };
 
@@ -387,6 +410,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
+  },
+  scrollContent: {
     padding: 24,
   },
   center: {
