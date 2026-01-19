@@ -5,8 +5,8 @@ import type {
   UploadableFile,
   SongStatus,
 } from "./types";
-import { uploadFile } from "./storage";
-import { toStoragePath, mapSongRows } from "./utils";
+import { uploadFile, getSignedUrl } from "./storage";
+import { toStoragePath, mapSongRows, sanitizeFileName, generateUniqueImageName } from "./utils";
 
 export const createSong = async (
   title: string,
@@ -26,44 +26,50 @@ export const createSong = async (
   let audioResult: { url: string; path: string };
 
   try {
-    const coverBlob =
-      imageFile instanceof Blob
-        ? imageFile
-        : imageFile instanceof File
-        ? imageFile
-        : new Blob([imageFile]);
-
-    const audioBlob =
-      audioFile instanceof Blob
-        ? audioFile
-        : audioFile instanceof File
-        ? audioFile
-        : new Blob([audioFile]);
-
+    // Préparer les fichiers pour l'upload
+    // uploadFile gère déjà les URIs locales (string), Blob, File
+    // On doit juste convertir ArrayBuffer en Blob si nécessaire
+    
+    const coverForUpload: string | Blob | File =
+      imageFile instanceof ArrayBuffer
+        ? new Blob([imageFile])
+        : imageFile;
+    
+    const audioForUpload: string | Blob | File =
+      audioFile instanceof ArrayBuffer
+        ? new Blob([audioFile])
+        : audioFile;
+    
     console.log("[createSong] Upload de la cover...");
+    // Nettoyer le titre pour la cover (sans timestamp, generateUniqueImageName l'ajoutera)
+    const cleanedTitle = title.trim()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-zA-Z0-9_-]/g, "")
+      .substring(0, 50) || "cover";
+    
+    // Générer un nom unique pour la cover basé sur le titre
+    const coverFileName = generateUniqueImageName(
+      cleanedTitle,
+      typeof File !== "undefined" && imageFile instanceof File
+        ? imageFile.name
+        : undefined,
+      "jpg"
+    );
     coverResult = await uploadFile(
       "albums_images",
-      toStoragePath(
-        "songs",
-        typeof File !== "undefined" && imageFile instanceof File
-          ? imageFile.name
-          : "cover.jpg"
-      ),
-      coverBlob,
+      toStoragePath("songs", coverFileName),
+      coverForUpload,
       spotifyToken
     );
     console.log("[createSong] Cover uploadée:", coverResult.url);
 
     console.log("[createSong] Upload de l'audio...");
+    // Utiliser le titre de la chanson comme nom de fichier
+    const audioFileName = sanitizeFileName(title.trim(), "mp3");
     audioResult = await uploadFile(
       "tracks",
-      toStoragePath(
-        "tracks",
-        typeof File !== "undefined" && audioFile instanceof File
-          ? audioFile.name
-          : "track.mp3"
-      ),
-      audioBlob,
+      toStoragePath("tracks", audioFileName),
+      audioForUpload,
       spotifyToken
     );
     console.log("[createSong] Audio uploadé:", audioResult.path);
@@ -280,6 +286,25 @@ export const createSong = async (
   return result.data as Song;
 };
 
+// Convertit le song_url (path) en URL signée pour le bucket privé tracks
+const getSongUrl = async (songUrl: string | null): Promise<string | null> => {
+  if (!songUrl) return null;
+  
+  // Si c'est déjà une URL complète (http/https), on la retourne telle quelle
+  if (songUrl.startsWith("http://") || songUrl.startsWith("https://")) {
+    return songUrl;
+  }
+  
+  // Sinon, c'est un path dans le bucket tracks (privé), on génère une URL signée
+  try {
+    const signedUrl = await getSignedUrl("tracks", songUrl, 3600); // 1 heure
+    return signedUrl;
+  } catch (error: any) {
+    console.error("[getSongUrl] Erreur génération URL signée:", error);
+    return null;
+  }
+};
+
 export const getValidatedSongs = async (): Promise<SongWithArtists[]> => {
   const { data, error } = await supabase
     .from("songs")
@@ -297,7 +322,18 @@ export const getValidatedSongs = async (): Promise<SongWithArtists[]> => {
 
   if (error || !data)
     throw new Error(`Lecture songs validés échouée: ${error?.message}`);
-  return mapSongRows(data, { onlyValidatedArtists: true }) as SongWithArtists[];
+  
+  const mappedSongs = mapSongRows(data, { onlyValidatedArtists: true }) as SongWithArtists[];
+  
+  // Convertir les song_url en URLs signées
+  const songsWithSignedUrls = await Promise.all(
+    mappedSongs.map(async (song) => ({
+      ...song,
+      song_url: await getSongUrl(song.song_url),
+    }))
+  );
+  
+  return songsWithSignedUrls;
 };
 
 export const getPendingSongs = async (): Promise<SongWithArtists[]> => {
@@ -317,7 +353,163 @@ export const getPendingSongs = async (): Promise<SongWithArtists[]> => {
 
   if (error || !data)
     throw new Error(`Lecture songs en attente échouée: ${error?.message}`);
-  return mapSongRows(data) as SongWithArtists[];
+  
+  const mappedSongs = mapSongRows(data) as SongWithArtists[];
+  
+  // Convertir les song_url en URLs signées
+  const songsWithSignedUrls = await Promise.all(
+    mappedSongs.map(async (song) => ({
+      ...song,
+      song_url: await getSongUrl(song.song_url),
+    }))
+  );
+  
+  return songsWithSignedUrls;
+};
+
+export const getRefusedSongs = async (): Promise<SongWithArtists[]> => {
+  const { data, error } = await supabase
+    .from("songs")
+    .select(
+      `
+        id, title, image_url, song_url, status, created_at,
+        songs_artists (
+          artist:artists (
+            id, name, bio, image_url, status, created_at
+          )
+        )
+      `
+    )
+    .eq("status", "refused");
+
+  if (error || !data)
+    throw new Error(`Lecture songs refusés échouée: ${error?.message}`);
+  
+  const mappedSongs = mapSongRows(data) as SongWithArtists[];
+  
+  // Convertir les song_url en URLs signées
+  const songsWithSignedUrls = await Promise.all(
+    mappedSongs.map(async (song) => ({
+      ...song,
+      song_url: await getSongUrl(song.song_url),
+    }))
+  );
+  
+  return songsWithSignedUrls;
+};
+
+// Récupère les chansons d'un artiste spécifique
+export const getSongsByArtistId = async (artistId: string): Promise<SongWithArtists[]> => {
+  try {
+    // Approche en deux étapes pour éviter les problèmes de jointure complexe
+    // 1. Récupérer les song_ids associés à l'artiste
+    const { data: songArtists, error: songArtistsError } = await supabase
+      .from("songs_artists")
+      .select("song_id")
+      .eq("artist_id", artistId);
+
+    if (songArtistsError) {
+      console.error("[getSongsByArtistId] Erreur songs_artists:", songArtistsError);
+      throw songArtistsError;
+    }
+
+    if (!songArtists || songArtists.length === 0) {
+      return [];
+    }
+
+    const songIds = songArtists.map((sa) => sa.song_id);
+
+    // 2. Récupérer les songs avec leurs artists
+    const { data, error } = await supabase
+      .from("songs")
+      .select(
+        `
+          id, title, image_url, song_url, status, created_at,
+          songs_artists (
+            artist:artists (
+              id, name, bio, image_url, status, created_at
+            )
+          )
+        `
+      )
+      .in("id", songIds);
+
+    if (error) {
+      console.error("[getSongsByArtistId] Erreur Supabase:", error);
+      
+      // Vérifier si c'est une erreur de clé API invalide
+      if (
+        error.message?.includes("Invalid API key") ||
+        error.code === "PGRST301" ||
+        error.hint?.includes("Double check your Supabase")
+      ) {
+        throw new Error(
+          `❌ Clé API Supabase invalide.\n\n` +
+          `🔧 Solutions:\n\n` +
+          `1️⃣ Vérifie ta variable d'environnement EXPO_PUBLIC_SUPABASE_KEY:\n` +
+          `   - Ouvre ton fichier .env\n` +
+          `   - Vérifie que EXPO_PUBLIC_SUPABASE_KEY contient la clé "anon" (pas la "service_role")\n` +
+          `   - Tu peux la trouver dans Supabase Dashboard > Settings > API\n` +
+          `   - Redémarre Expo avec 'npx expo start -c' après modification\n\n` +
+          `Erreur détaillée: ${error.message || JSON.stringify(error)}`
+        );
+      }
+      
+      // Vérifier si c'est une erreur de RLS
+      if (
+        error.message?.includes("row-level security") ||
+        error.message?.includes("RLS") ||
+        error.code === "42501"
+      ) {
+        throw new Error(
+          `❌ Accès refusé: Les policies RLS bloquent la lecture des chansons.\n\n` +
+          `🔧 Solutions possibles:\n\n` +
+          `1️⃣ Crée des policies RLS pour permettre la lecture:\n` +
+          `   - Va dans Supabase Dashboard > Table Editor > songs > RLS Policies\n` +
+          `   - Clique sur "New Policy"\n` +
+          `   - Nom: "Allow read on songs"\n` +
+          `   - Opération: SELECT\n` +
+          `   - Policy definition: USING (true)\n` +
+          `   - Répète pour songs_artists et artists\n\n` +
+          `   OU exécute ce SQL dans l'éditeur SQL:\n` +
+          `   CREATE POLICY "Allow read on songs" ON songs FOR SELECT USING (true);\n` +
+          `   CREATE POLICY "Allow read on songs_artists" ON songs_artists FOR SELECT USING (true);\n` +
+          `   CREATE POLICY "Allow read on artists" ON artists FOR SELECT USING (true);\n\n` +
+          `Erreur détaillée: ${error.message || JSON.stringify(error)}`
+        );
+      }
+      
+      throw new Error(`Lecture songs de l'artiste échouée: ${error.message || JSON.stringify(error)}`);
+    }
+
+    if (error) {
+      console.error("[getSongsByArtistId] Erreur Supabase (étape 2):", error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    const mappedSongs = mapSongRows(data) as SongWithArtists[];
+    
+    // Convertir les song_url en URLs signées
+    const songsWithSignedUrls = await Promise.all(
+      mappedSongs.map(async (song) => ({
+        ...song,
+        song_url: await getSongUrl(song.song_url),
+      }))
+    );
+    
+    return songsWithSignedUrls;
+  } catch (err: any) {
+    // Si l'erreur a déjà un message détaillé, la relancer
+    if (err.message?.includes("❌") || err.message?.includes("🔧")) {
+      throw err;
+    }
+    // Sinon, wrapper dans une erreur générique
+    throw new Error(`Lecture songs de l'artiste échouée: ${err?.message || "Erreur inconnue"}`);
+  }
 };
 
 export const validateSong = async (songId: string) => {

@@ -1,7 +1,7 @@
 import { supabase, supabaseUrl, supabaseAnonKey } from "./client";
 import type { Artist, UploadableFile, ArtistStatus } from "./types";
 import { uploadFile } from "./storage";
-import { toStoragePath } from "./utils";
+import { toStoragePath, generateUniqueImageName } from "./utils";
 
 export const createArtist = async (
   name: string,
@@ -11,16 +11,16 @@ export const createArtist = async (
 ) => {
   const isLocalUri = typeof imageFile === "string";
 
+  // Générer un nom de fichier unique pour éviter les écrasements
   let fileName: string;
-
-  if (isLocalUri) {
+  if (imageFile instanceof File) {
+    fileName = generateUniqueImageName("artist", imageFile.name, "jpg");
+  } else if (isLocalUri) {
     const uriParts = imageFile.split("/");
     const uriFileName = uriParts[uriParts.length - 1];
-    fileName = uriFileName || `artist-${Date.now()}.jpg`;
-  } else if (imageFile instanceof File) {
-    fileName = imageFile.name;
+    fileName = generateUniqueImageName("artist", uriFileName, "jpg");
   } else {
-    fileName = `${Date.now()}.jpg`;
+    fileName = generateUniqueImageName("artist", undefined, "jpg");
   }
 
   const fileForUpload: string | Blob | File = isLocalUri
@@ -326,8 +326,6 @@ export const getArtistBySpotifyUserId = async (
 
     // Essayer d'abord l'Edge Function get-artist-by-id avec spotifyUserId
     let edgeFunctionFailed = false;
-    let edgeFunctionError: any = null;
-
     try {
       const response = await fetch(
         `${supabaseUrl}/functions/v1/get-artist-by-id`,
@@ -375,7 +373,6 @@ export const getArtistBySpotifyUserId = async (
         networkError.message || networkError
       );
       edgeFunctionFailed = true;
-      edgeFunctionError = networkError;
     }
 
     // Fallback: interroger directement la table Supabase si l'Edge Function a échoué
