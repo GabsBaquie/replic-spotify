@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { registerSpotifyPause } from "@/hooks/Player/playerCoordinator";
 import { getLocalDeviceId } from "@/query/player/getLocalDeviceId";
 
 const API_BASE = "https://api.spotify.com/v1";
@@ -163,6 +164,11 @@ export default function useSpotifyPlayer() {
     const interval = setInterval(fetchState, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    registerSpotifyPause(pause);
+    return () => registerSpotifyPause(null);
+  }, [pause]);
 
   return {
     state,
