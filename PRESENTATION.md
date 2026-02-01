@@ -548,7 +548,7 @@ replic-spotify/
 - `expo-auth-session` ~6.2.1
 
 **Spotify** :
-- `react-native-spotify-remote` ^0.3.10
+- Lecture via WebView + Spotify Web Playback SDK (pas de module natif Spotify)
 
 #### 5.3 Communication Inter-Composants
 
