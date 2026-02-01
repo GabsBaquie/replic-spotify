@@ -3,7 +3,11 @@
 # dependencies
 node_modules/
 
+# env (clés API, ne jamais commiter)
 .env
+.env*.local
+.env.development
+.env.production
 
 # Expo
 .expo/
@@ -11,7 +15,19 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# EAS
+.eas/
+
+# Native (générés par prebuild si besoin)
+ios/
+android/
+
+# Build / output
+build/
+coverage/
+*.tsbuildinfo
+
+# Native credentials
 *.orig.*
 *.jks
 *.p8
@@ -22,19 +38,27 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
+# Debug / logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+logs/
+
+# Cache
+.cache/
+.turbo/
 
 # macOS
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# IDE / éditeur (préférences locales)
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 
-# typescript
-*.tsbuildinfo
-
+# Projet exemple (reset-project)
 app-example
