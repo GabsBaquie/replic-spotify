@@ -247,9 +247,26 @@ export const getArtistById = async (
   return data as Artist;
 };
 
+const NETWORK_RETRY_ATTEMPTS = 3;
+const NETWORK_RETRY_DELAY_MS = 1500;
+
+const isNetworkFailureError = (e: any): boolean => {
+  const msg =
+    e?.message ??
+    (typeof e?.details === "string" ? e.details : "") ??
+    String(e);
+  return (
+    msg.includes("Network request failed") || msg.includes("Failed to fetch")
+  );
+};
+
+const delay = (ms: number) =>
+  new Promise<void>((r) => setTimeout(r, ms));
+
 /**
  * Récupère l'artiste par son spotify_user_id
  * Utilise l'Edge Function get-artist-by-id avec spotifyUserId
+ * Retry automatique en cas de "Network request failed" (simulateur iOS).
  */
 export const getArtistBySpotifyUserId = async (
   spotifyToken: string
@@ -324,93 +341,147 @@ export const getArtistBySpotifyUserId = async (
       return null;
     }
 
-    // Essayer d'abord l'Edge Function get-artist-by-id avec spotifyUserId
+    // Essayer d'abord l'Edge Function get-artist-by-id avec spotifyUserId (retry sur échec réseau)
     let edgeFunctionFailed = false;
-    try {
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/get-artist-by-id`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: supabaseAnonKey,
-            "X-Spotify-Token": spotifyToken,
-          },
-          body: JSON.stringify({ spotifyUserId }),
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        return result.artist as Artist | null;
-      }
-
-      // Si 404, l'artiste n'existe peut-être pas, ou l'Edge Function n'est pas déployée
-      if (response.status === 404) {
-        edgeFunctionFailed = true;
-        console.warn(
-          "[getArtistBySpotifyUserId] Edge Function retourne 404, tentative avec requête directe Supabase"
+    for (let attempt = 1; attempt <= NETWORK_RETRY_ATTEMPTS; attempt++) {
+      try {
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/get-artist-by-id`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: supabaseAnonKey,
+              "X-Spotify-Token": spotifyToken,
+            },
+            body: JSON.stringify({ spotifyUserId }),
+          }
         );
-      } else {
-        // Pour les autres erreurs HTTP, logger mais continuer avec le fallback
-        const errorText = await response.text().catch(() => "Erreur inconnue");
-        let errorJson: any = null;
-        try {
-          errorJson = JSON.parse(errorText);
-        } catch {
-          // Ignore JSON parse errors
+
+        if (response.ok) {
+          const result = await response.json();
+          return result.artist as Artist | null;
+        }
+
+        // Si 404, l'artiste n'existe peut-être pas, ou l'Edge Function n'est pas déployée
+        if (response.status === 404) {
+          edgeFunctionFailed = true;
+          console.warn(
+            "[getArtistBySpotifyUserId] Edge Function retourne 404, tentative avec requête directe Supabase"
+          );
+        } else {
+          const errorText = await response.text().catch(() => "Erreur inconnue");
+          let errorJson: any = null;
+          try {
+            errorJson = JSON.parse(errorText);
+          } catch {
+            // Ignore JSON parse errors
+          }
+          console.warn(
+            `[getArtistBySpotifyUserId] Edge Function erreur (${response.status}):`,
+            errorJson?.error || errorText
+          );
+          edgeFunctionFailed = true;
+        }
+        break;
+      } catch (networkError: any) {
+        const msg = networkError?.message ?? String(networkError);
+        const isNetworkFailure = isNetworkFailureError(networkError);
+        if (attempt < NETWORK_RETRY_ATTEMPTS && isNetworkFailure) {
+          if (__DEV__) {
+            console.warn(
+              `[getArtistBySpotifyUserId] Tentative ${attempt}/${NETWORK_RETRY_ATTEMPTS} (Edge Function) échec réseau, nouvel essai dans ${NETWORK_RETRY_DELAY_MS}ms...`
+            );
+          }
+          await delay(NETWORK_RETRY_DELAY_MS);
+          continue;
         }
         console.warn(
-          `[getArtistBySpotifyUserId] Edge Function erreur (${response.status}):`,
-          errorJson?.error || errorText
+          "[getArtistBySpotifyUserId] Erreur réseau lors de l'appel à l'Edge Function, tentative avec requête directe Supabase:",
+          msg
         );
+        if (isNetworkFailure) {
+          console.warn(
+            "[getArtistBySpotifyUserId] Conseil: vérifie ta connexion internet, désactive VPN/proxy, ou teste sur un appareil réel (le simulateur iOS peut bloquer certaines requêtes)."
+          );
+        }
         edgeFunctionFailed = true;
+        break;
       }
-    } catch (networkError: any) {
-      // Erreur réseau lors de l'appel à l'Edge Function
-      console.warn(
-        "[getArtistBySpotifyUserId] Erreur réseau lors de l'appel à l'Edge Function, tentative avec requête directe Supabase:",
-        networkError.message || networkError
-      );
-      edgeFunctionFailed = true;
     }
 
-    // Fallback: interroger directement la table Supabase si l'Edge Function a échoué
+    // Fallback: interroger directement la table Supabase si l'Edge Function a échoué (retry sur échec réseau)
     if (edgeFunctionFailed) {
-      try {
-        const { data, error } = await supabase
-          .from("artists")
-          .select("*")
-          .eq("spotify_user_id", spotifyUserId)
-          .maybeSingle();
+      for (let attempt = 1; attempt <= NETWORK_RETRY_ATTEMPTS; attempt++) {
+        try {
+          const { data, error } = await supabase
+            .from("artists")
+            .select("*")
+            .eq("spotify_user_id", spotifyUserId)
+            .maybeSingle();
 
-        if (error) {
-          console.error(
-            "[getArtistBySpotifyUserId] Erreur requête directe Supabase:",
-            error
-          );
-          // Si c'est une erreur RLS, on peut quand même retourner null silencieusement
-          if (
-            error.message?.includes("row-level security") ||
-            error.code === "42501"
-          ) {
-            console.warn(
-              "[getArtistBySpotifyUserId] RLS bloque l'accès. Assure-toi que les policies RLS permettent la lecture."
+          if (error) {
+            const isNetworkFailure = isNetworkFailureError(error);
+            if (
+              attempt < NETWORK_RETRY_ATTEMPTS &&
+              isNetworkFailure
+            ) {
+              if (__DEV__) {
+                console.warn(
+                  `[getArtistBySpotifyUserId] Tentative ${attempt}/${NETWORK_RETRY_ATTEMPTS} (Supabase) échec réseau, nouvel essai dans ${NETWORK_RETRY_DELAY_MS}ms...`
+                );
+              }
+              await delay(NETWORK_RETRY_DELAY_MS);
+              continue;
+            }
+            console.error(
+              "[getArtistBySpotifyUserId] Erreur requête directe Supabase:",
+              isNetworkFailure ? "Network request failed" : error
             );
+            if (isNetworkFailure) {
+              console.warn(
+                "[getArtistBySpotifyUserId] Le simulateur iOS peut bloquer les requêtes vers Supabase. Essaie: 1) Appareil réel, 2) Redémarrer le simulateur, 3) Vérifier EXPO_PUBLIC_SUPABASE_URL (doit être en https://)."
+              );
+            }
+            if (
+              error.message?.includes("row-level security") ||
+              error.code === "42501"
+            ) {
+              console.warn(
+                "[getArtistBySpotifyUserId] RLS bloque l'accès. Assure-toi que les policies RLS permettent la lecture."
+              );
+            }
             return null;
+          }
+          return data as Artist | null;
+        } catch (fallbackError: any) {
+          const isNetworkFailure = isNetworkFailureError(fallbackError);
+          if (
+            attempt < NETWORK_RETRY_ATTEMPTS &&
+            isNetworkFailure
+          ) {
+            if (__DEV__) {
+              console.warn(
+                `[getArtistBySpotifyUserId] Tentative ${attempt}/${NETWORK_RETRY_ATTEMPTS} (Supabase) échec réseau, nouvel essai dans ${NETWORK_RETRY_DELAY_MS}ms...`
+              );
+            }
+            await delay(NETWORK_RETRY_DELAY_MS);
+            continue;
+          }
+          const msg = fallbackError?.message ?? String(fallbackError);
+          console.error(
+            "[getArtistBySpotifyUserId] Erreur lors du fallback Supabase:",
+            isNetworkFailure ? msg : fallbackError
+          );
+          if (isNetworkFailure) {
+            console.warn(
+              "[getArtistBySpotifyUserId] Impossible de joindre Supabase. Vérifie EXPO_PUBLIC_SUPABASE_URL (https://xxx.supabase.co), ta connexion, ou teste sur un appareil réel."
+            );
           }
           return null;
         }
-
-        return data as Artist | null;
-      } catch (fallbackError: any) {
-        console.error(
-          "[getArtistBySpotifyUserId] Erreur lors du fallback Supabase:",
-          fallbackError
-        );
-        // Si le fallback échoue aussi, retourner null
-        return null;
       }
+      return null;
     }
 
     return null;
