@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { stopSupabase } from "@/hooks/Player/playerCoordinator";
 import { getLocalDeviceId } from "./getLocalDeviceId";
 
 const API_BASE = "https://api.spotify.com/v1";
@@ -31,6 +32,8 @@ const activateDeviceIfNeeded = async (
 export const startPlayback = async (
   options: StartPlaybackOptions
 ): Promise<void> => {
+  await stopSupabase();
+
   const token = await AsyncStorage.getItem("spotify_access_token");
   if (!token) throw new Error("Token Spotify manquant");
 

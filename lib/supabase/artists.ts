@@ -532,6 +532,22 @@ export const updateArtistSpotifyUserId = async (
   }
 };
 
+/**
+ * Recherche les artistes validés dont le nom contient la requête (insensible à la casse).
+ */
+export const searchArtistsByName = async (query: string): Promise<Artist[]> => {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  const { data, error } = await supabase
+    .from("artists")
+    .select("*")
+    .eq("status", "validated")
+    .ilike("name", `%${trimmed}%`)
+    .limit(20);
+  if (error) throw new Error(`Recherche artistes échouée: ${error.message}`);
+  return (data ?? []) as Artist[];
+};
+
 export const getValidatedArtists = async (): Promise<Artist[]> => {
   const { data, error } = await supabase
     .from("artists")

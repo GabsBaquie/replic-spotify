@@ -13,6 +13,7 @@ import { queryClient } from '@/query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { SupabasePlayerProvider } from '@/features/player/SupabasePlayerContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -38,17 +39,18 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider theme={theme}>
-       <SpotifyConnectDevice  />
-          <PersistQueryClientProvider
-            client={queryClient} persistOptions={{ persister: asyncStoragePersister }}
-          > 
-        <QueryClientProvider client={ queryClient }>
-          <Stack screenOptions={{ headerShown: false }} />
-        </QueryClientProvider>
-
-        <StatusBar style="light" />
-      </PersistQueryClientProvider>    
+      <SpotifyConnectDevice />
+      <SupabasePlayerProvider>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister: asyncStoragePersister }}
+        >
+          <QueryClientProvider client={queryClient}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </QueryClientProvider>
+          <StatusBar style="light" />
+        </PersistQueryClientProvider>
+      </SupabasePlayerProvider>
     </ThemeProvider>
-    
   );
 }

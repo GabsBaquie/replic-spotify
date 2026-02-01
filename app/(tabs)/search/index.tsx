@@ -2,28 +2,29 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, TextInput, Image, TouchableOpacity } from 'react-native';
 import { Box, Text } from '@/components/restyle';
 import { RestyleButton } from '@/components/RestyleButton';
-import searchContent from '@/query/search/searchContent';
+import { searchContentMixed, flattenMixedSearchToItems, type SearchResultItem } from '@/query/search/searchContent';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 const Search = () => {
     const [loading, setLoading] = useState(false);
-    const [searchResult, setSearchResult] = useState<any>(null);
+    const [searchItems, setSearchItems] = useState<SearchResultItem[]>([]);
     const [query, setQuery] = useState('');
 
-    // déclenchement de la recherche avec délai de 1s après saisie
+    // Recherche mixte Spotify + Supabase avec délai 1s après saisie
     useEffect(() => {
-        if (!query) {
-            setSearchResult(null);
+        if (!query.trim()) {
+            setSearchItems([]);
             return;
         }
         setLoading(true);
         const handler = setTimeout(async () => {
             try {
-                const result = await searchContent(query);
-                setSearchResult(result);
+                const result = await searchContentMixed(query);
+                setSearchItems(flattenMixedSearchToItems(result, query));
             } catch (error) {
                 console.error('Error fetching search results:', error);
+                setSearchItems([]);
             } finally {
                 setLoading(false);
             }
@@ -31,12 +32,38 @@ const Search = () => {
         return () => clearTimeout(handler);
     }, [query]);
 
+    const handleItemPress = (item: SearchResultItem) => {
+        if (item.source === 'supabase') {
+            if (item.type === 'artist') {
+                router.push({
+                    pathname: '/(tabs)/library/artist/[id]',
+                    params: { id: item.id, source: 'supabase', item: JSON.stringify(item.raw) },
+                });
+            } else if (item.type === 'track') {
+                router.push({
+                    pathname: '/(tabs)/library/track/[id]',
+                    params: { id: item.id, source: 'supabase', item: JSON.stringify(item.raw) },
+                });
+            }
+            return;
+        }
+        const path =
+            item.type === 'track' ? '/(tabs)/search/track/[id]'
+            : item.type === 'album' ? '/(tabs)/search/album/[id]'
+            : item.type === 'artist' ? '/(tabs)/search/artist/[id]'
+            : '/(tabs)/search/playlist/[id]';
+        router.push({
+            pathname: path as any,
+            params: { id: item.id, item: JSON.stringify(item.raw) },
+        });
+    };
+
     return (
         <Box style={styles.container}>
             <Box flexDirection="row" justifyContent={'space-around'} backgroundColor='transparent' style={{display: "flex", marginTop: 75}} width={'100%'}>
                 <TextInput
                     style={styles.input_container_input}
-                    placeholder="Search"
+                    placeholder="Artiste, titre..."
                     placeholderTextColor="#000"
                     keyboardType="web-search"
                     autoCapitalize="none"
@@ -47,107 +74,47 @@ const Search = () => {
                 <RestyleButton
                     title="Cancel"
                     variant="transparent"
-                    onPress={() => { setQuery(''); setSearchResult(null); }}
+                    onPress={() => { setQuery(''); setSearchItems([]); }}
                 />
             </Box>
-            <Text variant="body" color="text" style={styles.subtitle}>Search Result</Text>
+            <Text variant="body" color="text" style={styles.subtitle}>Résultats (Spotify + créateurs)</Text>
             {loading ? (
-                <Text>Loading...</Text>
-            ) : searchResult ? (
+                <Text>Chargement...</Text>
+            ) : searchItems.length > 0 ? (
                 <Animated.FlatList
-                    data={[
-                        ...(searchResult.tracks?.items || []),
-                        ...(searchResult.albums?.items || []),
-                        ...(searchResult.artists?.items || []),
-                        ...(searchResult.playlists?.items || []),
-                    ].filter(Boolean)}
+                    data={searchItems}
                     style={{ marginBottom: 110 }}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item) => `${item.source}-${item.type}-${item.id}`}
                     entering={FadeIn.duration(300)}
                     exiting={FadeOut.duration(300)}
                     maxToRenderPerBatch={7}
                     initialNumToRender={7}
                     windowSize={7}
-                    renderItem={({ item }) => {
-                        let type = '';
-                        if (item.type) {
-                            type = item.type;
-                        } else if (item.artists && item.album) {
-                            type = 'track';
-                        } else if (item.artists) {
-                            type = 'album';
-                        } else if (item.followers) {
-                            type = 'artist';
-                        } else if (item.owner) {
-                            type = 'playlist';
-                        }
-
-                        let path = '';
-                        if (type === 'track') path = '/(tabs)/search/track/[id]';
-                        else if (type === 'album') path = '/(tabs)/search/album/[id]';
-                        else if (type === 'artist') path = '/(tabs)/search/artist/[id]';
-                        else if (type === 'playlist') path = '/(tabs)/search/playlist/[id]';
-
-                        return (
-
-                            <TouchableOpacity onPress={() => router.push(
-                                {
-                                    pathname: path as any,
-                                    params: { 
-                                        id: item.id,
-                                        item: JSON.stringify(item),
-                                     }
-                                    
-                                }
-                            )}>
-
-
-                                <Box style={{ marginVertical: 10 }} flexDirection="row-reverse" alignItems="center" justifyContent="flex-end" gap={"m"}>
-                                    <Box>
-                                        <Text variant="body" color="text">
-                                            {type === 'track' && item.name}
-                                            {type === 'album' && item.name}
-                                            {type === 'artist' && item.name}
-                                            {type === 'playlist' && item.name}
-                                        </Text>
-                                        {type === 'track' && (
-                                            <>
-                                                <Text variant="body" color="text">{item.artists[0]?.name}</Text>
-                                                {item.album && (
-                                                    <Text variant="caption" color="text">{item.album.name}</Text>
-                                                )}
-                                            </>
-                                        )}
-                                        {type === 'album' && (
-                                            <Text variant="body" color="text">{item.artists[0]?.name}</Text>
-                                        )}
-                                        {type === 'artist' && (
-                                            <Text variant="caption" color="text">Artist</Text>
-                                        )}
-                                        {type === 'playlist' && (
-                                            <Text variant="caption" color="text">{item.owner?.display_name}</Text>
-                                        )}
-                                    </Box>
-                                    {(type === 'track' && item.album?.images?.[0]) && (
-                                        <Image source={{ uri: item.album.images[0].url }} style={{ width: 50, height: 50 }} />
-                                    )}
-                                    {(type === 'album' && item.images?.[0]) && (
-                                        <Image source={{ uri: item.images[0].url }} style={{ width: 50, height: 50 }} />
-                                    )}
-                                    {(type === 'artist' && item.images?.[0]) && (
-                                        <Image source={{ uri: item.images[0].url }} style={{ width: 50, height: 50, borderRadius: 50 }} />
-                                    )}
-                                    {(type === 'playlist' && item.images?.[0]) && (
-                                        <Image source={{ uri: item.images[0].url }} style={{ width: 50, height: 50 }} />
-                                    )}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => handleItemPress(item)}>
+                            <Box style={{ marginVertical: 10 }} flexDirection="row-reverse" alignItems="center" justifyContent="flex-end" gap={"m"}>
+                                <Box>
+                                    <Text variant="body" color="text">{item.name}</Text>
+                                    <Text variant="caption" color="text">
+                                        {item.subtitle}
+                                        {item.source === 'supabase' && ` · Créateur`}
+                                    </Text>
                                 </Box>
-                            </TouchableOpacity>
-                        );
-                    }}
+                                {item.imageUri ? (
+                                    <Image
+                                        source={{ uri: item.imageUri }}
+                                        style={item.type === 'artist' ? styles.avatar : styles.thumb}
+                                    />
+                                ) : (
+                                    <Box style={[styles.thumb, styles.placeholder]} />
+                                )}
+                            </Box>
+                        </TouchableOpacity>
+                    )}
                 />
-            ) : (
-                <Text>No results found</Text>
-            )}
+            ) : query.trim() ? (
+                <Text>Aucun résultat</Text>
+            ) : null}
         </Box>
     );
 };
@@ -172,10 +139,21 @@ const styles = StyleSheet.create({
         backgroundColor: '#777777',
         borderRadius: 10
     },
-    subtitle : {
+    subtitle: {
         marginVertical: 10,
-    }
-
+    },
+    thumb: {
+        width: 50,
+        height: 50,
+    },
+    avatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+    },
+    placeholder: {
+        backgroundColor: '#555',
+    },
 });
 
 export default Search;

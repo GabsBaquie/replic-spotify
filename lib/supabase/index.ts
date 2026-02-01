@@ -21,6 +21,7 @@ export {
   getArtistById,
   getArtistBySpotifyUserId,
   updateArtistSpotifyUserId,
+  searchArtistsByName,
   getValidatedArtists,
   getPendingArtists,
   validateArtist,
@@ -34,6 +35,7 @@ export {
   getPendingSongs,
   getRefusedSongs,
   getSongsByArtistId,
+  searchValidatedSongsByArtistName,
   validateSong,
   refuseSong,
 } from "./songs";

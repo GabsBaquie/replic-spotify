@@ -36,7 +36,7 @@ export default function NowPlayingBar({
 
   const { playbackPosition, trackDuration, isPaused, track } = state;
   const { name: trackName, artists, albumArtUri } = track;
-  const artistNames = artists.join(", ");
+  const artistNames = (artists ?? []).join(", ");
 
   const progressFraction =
     trackDuration > 0 ? playbackPosition / trackDuration : 0;

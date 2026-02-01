@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { uploadFile, getSignedUrl } from "./storage";
 import { toStoragePath, mapSongRows, sanitizeFileName, generateUniqueImageName, getStoragePath } from "./utils";
+import { searchArtistsByName } from "./artists";
 
 export const createSong = async (
   title: string,
@@ -327,6 +328,29 @@ export const getRefusedSongs = async (): Promise<SongWithArtists[]> => {
   );
   
   return songsWithSignedUrls;
+};
+
+/**
+ * Recherche les chansons validées dont au moins un artiste a un nom qui contient la requête.
+ * Retourne uniquement les chansons avec status = 'validated', dédupliquées par id.
+ */
+export const searchValidatedSongsByArtistName = async (
+  query: string
+): Promise<SongWithArtists[]> => {
+  const artists = await searchArtistsByName(query);
+  if (artists.length === 0) return [];
+  const songsArrays = await Promise.all(
+    artists.map((a) => getSongsByArtistId(a.id))
+  );
+  const byId = new Map<string, SongWithArtists>();
+  for (const arr of songsArrays) {
+    for (const song of arr) {
+      if (song.status === "validated" && !byId.has(song.id)) {
+        byId.set(song.id, song);
+      }
+    }
+  }
+  return Array.from(byId.values());
 };
 
 // Récupère les chansons d'un artiste spécifique
