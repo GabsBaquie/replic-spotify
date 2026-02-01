@@ -223,16 +223,81 @@ npm run lint
 
 ---
 
-## 6. Commandes utiles
+## 6. Builder l’app avec EAS (Expo)
 
-| Commande                | Description                        |
-|-------------------------|------------------------------------|
-| `npm install`           | Installer les dépendances          |
-| `npm start`             | Démarrer Expo en mode développement |
-| `npx expo start -c`     | Démarrer en vidant le cache        |
-| `npx expo run:ios`      | Lancer en build natif iOS         |
-| `npx expo run:android`  | Lancer en build natif Android     |
-| `npm run lint`          | Lancer le linter                   |
+Pour générer des **builds installables** (APK / AAB pour Android, IPA pour iOS), utilise **EAS Build** (Expo Application Services).
+
+### Prérequis
+
+- Compte **Expo** : [expo.dev](https://expo.dev) (gratuit).
+- Projet déjà lié à EAS (le `projectId` dans `app.json` indique que c’est le cas).
+
+### Connexion et variables d’environnement
+
+1. Se connecter à EAS :
+   ```bash
+   npx eas login
+   ```
+
+2. **Variables d’environnement pour le build** : les variables `EXPO_PUBLIC_*` du `.env` doivent être disponibles pendant le build. Deux options :
+   - **EAS Secrets** (recommandé pour production) : les définir une fois, elles seront injectées à chaque build.
+     ```bash
+     npx eas secret:create --name EXPO_PUBLIC_SPOTIFY_CLIENT_ID --value "ton_client_id" --type string
+     npx eas secret:create --name EXPO_PUBLIC_SPOTIFY_REDIRECT_URI --value "replicspotify://callback" --type string
+     npx eas secret:create --name EXPO_PUBLIC_SUPABASE_URL --value "https://ton-projet.supabase.co" --type string
+     npx eas secret:create --name EXPO_PUBLIC_SUPABASE_KEY --value "ta_cle_anon" --type string
+     ```
+   - **Fichier `eas.json`** : ajouter un champ `env` dans le profil de build (ex. `production`) avec les mêmes variables. Moins sécurisé si le repo est public.
+
+### Lancer un build
+
+```bash
+# Android (APK/AAB)
+npm run build:android
+# ou
+npx eas build --platform android --profile production
+
+# iOS (nécessite un compte Apple Developer pour distribution)
+npm run build:ios
+# ou
+npx eas build --platform ios --profile production
+
+# Les deux plateformes
+npm run build:all
+# ou
+npx eas build --platform all --profile production
+```
+
+- Le build s’exécute sur les **serveurs Expo** (pas besoin de Xcode/Android Studio sur ta machine).
+- À la fin, un **lien de téléchargement** est fourni (APK pour Android ; pour iOS, téléchargement possible si le profil est configuré pour une distribution interne ou ad hoc).
+
+### Profils de build (`eas.json`)
+
+- **production** : build pour mise en store ou distribution finale (par défaut dans les scripts).
+- **preview** : build interne (ex. testeurs), distribution « internal ».
+- **development** : build avec client de développement (Expo Dev Client).
+
+Pour un build de démo ou pour la prof, **preview** suffit souvent :
+
+```bash
+npx eas build --platform android --profile preview
+```
+
+---
+
+## 7. Commandes utiles
+
+| Commande                 | Description                          |
+|--------------------------|--------------------------------------|
+| `npm install`            | Installer les dépendances            |
+| `npm start`              | Démarrer Expo en mode développement  |
+| `npx expo start -c`      | Démarrer en vidant le cache           |
+| `npx expo run:ios`       | Lancer en build natif iOS             |
+| `npx expo run:android`   | Lancer en build natif Android        |
+| `npm run build:ios`      | Build EAS iOS (production)           |
+| `npm run build:android`  | Build EAS Android (production)       |
+| `npm run build:all`      | Build EAS iOS + Android              |
+| `npm run lint`           | Lancer le linter                     |
 
 ---
 
