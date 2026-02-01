@@ -11,7 +11,6 @@
       "android"
     ],
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.replicspotify.replicspotify",
