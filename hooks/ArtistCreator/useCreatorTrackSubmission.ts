@@ -1,23 +1,17 @@
 import { useCallback, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
-
-const CREATOR_TRACKS_KEY = "creator_tracks";
-
-type TrackPayload = {
-  id: string;
-  title: string;
-  coverUri: string;
-  coCreators: string[];
-  status: "pending" | "validated" | "rejected";
-  createdAt: number;
-};
+import { createSong, getArtistBySpotifyUserId } from "@/lib/supabase";
 
 export const useCreatorTrackSubmission = () => {
   const [title, setTitle] = useState("");
   const [coverUri, setCoverUri] = useState<string | null>(null);
+  const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [audioFileName, setAudioFileName] = useState<string | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null); // Stocker le File original sur web
   const [coCreators, setCoCreators] = useState<string[]>([]);
   const [coCreatorDraft, setCoCreatorDraft] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +22,7 @@ export const useCreatorTrackSubmission = () => {
     if (!permission.granted) {
       Alert.alert(
         "Accès requis",
-        "Autorise l’accès à ta galerie pour choisir une cover."
+        "Autorise l'accès à ta galerie pour choisir une cover."
       );
       return;
     }
@@ -45,6 +39,54 @@ export const useCreatorTrackSubmission = () => {
     }
   }, []);
 
+  const pickAudio = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "audio/*",
+          "audio/mpeg",
+          "audio/mp3",
+          "audio/mp4",
+          "audio/wav",
+          "audio/aac",
+          "audio/ogg",
+          "audio/flac",
+        ],
+        copyToCacheDirectory: true,
+        multiple: false,
+        // Sur iOS/Android, cela permet d'accéder à iCloud, Google Drive, etc.
+        ...(Platform.OS !== "web" && {
+          presentationStyle: "pageSheet",
+        }),
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        setAudioUri(result.assets[0].uri);
+        setAudioFileName(result.assets[0].name || "audio.mp3");
+      }
+    } catch (error: any) {
+      console.error("[pickAudio] Erreur:", error);
+      Alert.alert(
+        "Erreur",
+        error?.message || "Impossible de sélectionner le fichier audio. Assure-toi d'avoir accès aux fichiers sur ton appareil."
+      );
+    }
+  }, []);
+
+  const handleAudioFile = useCallback((file: File | { uri: string; name: string }) => {
+    if (Platform.OS === "web" && file instanceof File) {
+      // Sur web, stocker le File original pour préserver le type MIME
+      const url = URL.createObjectURL(file);
+      setAudioUri(url);
+      setAudioFileName(file.name || "audio.mp3");
+      setAudioFile(file); // Stocker le File original
+    } else if ("uri" in file) {
+      setAudioUri(file.uri);
+      setAudioFileName(file.name || "audio.mp3");
+      setAudioFile(null); // Pas de File sur mobile
+    }
+  }, []);
+
   const addCoCreator = useCallback(() => {
     const trimmed = coCreatorDraft.trim();
     if (!trimmed) return;
@@ -57,30 +99,57 @@ export const useCreatorTrackSubmission = () => {
   }, []);
 
   const submit = useCallback(async () => {
-    if (!title.trim() || !coverUri) {
+    if (!title.trim() || !coverUri || !audioUri) {
       Alert.alert(
         "Formulaire incomplet",
-        "Ajoute un visuel et le nom de ta musique."
+        "Ajoute un titre, une cover et un fichier audio."
       );
       return;
     }
 
     setLoading(true);
     try {
-      const payload: TrackPayload = {
-        id: Date.now().toString(),
-        title: title.trim(),
-        coverUri,
-        coCreators,
-        status: "pending",
-        createdAt: Date.now(),
-      };
+      // Récupérer le token Spotify
+      const spotifyToken = await AsyncStorage.getItem("spotify_access_token");
+      if (!spotifyToken) {
+        Alert.alert(
+          "Authentification requise",
+          "Tu dois être connecté à Spotify pour envoyer une musique."
+        );
+        setLoading(false);
+        return;
+      }
 
-      const existingRaw = await AsyncStorage.getItem(CREATOR_TRACKS_KEY);
-      const existing = existingRaw ? JSON.parse(existingRaw) : [];
-      await AsyncStorage.setItem(
-        CREATOR_TRACKS_KEY,
-        JSON.stringify([payload, ...existing])
+      // Récupérer l'artiste actuel
+      const artist = await getArtistBySpotifyUserId(spotifyToken);
+      if (!artist) {
+        Alert.alert(
+          "Profil artiste requis",
+          "Tu dois avoir un profil artiste pour envoyer une musique. Crée d'abord ton profil artiste."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // L'artiste peut être en statut "pending", "validated" ou "refused"
+      // On permet l'envoi même si le statut est "pending"
+
+      // Préparer les fichiers pour l'upload
+      const artistIds = [artist.id];
+
+      // Sur web, utiliser le File original si disponible pour préserver le type MIME
+      // Sinon utiliser l'URI (pour React Native)
+      const audioFileForUpload = Platform.OS === "web" && audioFile 
+        ? audioFile 
+        : audioUri;
+
+      // Upload vers Supabase
+      await createSong(
+        title.trim(),
+        coverUri, // URI de l'image
+        audioFileForUpload, // File sur web, URI sur mobile
+        artistIds,
+        spotifyToken
       );
 
       Alert.alert(
@@ -94,24 +163,39 @@ export const useCreatorTrackSubmission = () => {
         ]
       );
 
+      // Réinitialiser le formulaire
       setTitle("");
       setCoverUri(null);
+      setAudioUri(null);
+      setAudioFileName(null);
+      setAudioFile(null);
       setCoCreators([]);
       setCoCreatorDraft("");
     } catch (error: any) {
+      console.error("[useCreatorTrackSubmission] Erreur complète:", {
+        error,
+        message: error?.message,
+        stack: error?.stack,
+      });
+      
+      // Afficher un message d'erreur détaillé
+      const errorMessage = error?.message || "Impossible d'enregistrer ta musique.";
       Alert.alert(
         "Échec",
-        error?.message ?? "Impossible d’enregistrer ta musique."
+        errorMessage,
+        [{ text: "OK" }]
       );
     } finally {
       setLoading(false);
     }
-  }, [title, coverUri, coCreators, router]);
+  }, [title, coverUri, audioUri, audioFile, router]);
 
   return {
     state: {
       title,
       coverUri,
+      audioUri,
+      audioFileName,
       coCreators,
       coCreatorDraft,
       loading,
@@ -120,6 +204,8 @@ export const useCreatorTrackSubmission = () => {
       setTitle,
       setCoCreatorDraft,
       pickCover,
+      pickAudio,
+      handleAudioFile,
       addCoCreator,
       removeCoCreator,
       submit,

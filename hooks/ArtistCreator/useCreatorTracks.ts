@@ -1,16 +1,42 @@
 import { useCallback, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
-
-const CREATOR_TRACKS_KEY = "creator_tracks";
+import { getSongsByArtistId, type SongWithArtists } from "@/lib/supabase";
 
 type CreatorTrack = {
   id: string;
   title: string;
   coverUri: string;
+  songUrl: string | null;
   coCreators: string[];
-  status: "pending" | "validated" | "rejected";
-  createdAt: number;
+  artistIds: string[];
+  artists: string[];
+  status: "pending" | "validated" | "refused";
+  createdAt: string;
+};
+
+const CREATOR_ARTIST_ID_KEY = "creator_artist_id";
+
+// Convertit SongWithArtists en CreatorTrack
+const convertSongToTrack = (song: SongWithArtists): CreatorTrack => {
+  // Récupérer les noms des artistes
+  const artists = song.artists.map((artist) => artist.name);
+  const artistIds = song.artists.map((artist) => artist.id);
+  
+  // Récupérer les noms des co-créateurs (tous les artistes sauf le premier)
+  const coCreators = song.artists.slice(1).map((artist) => artist.name);
+  
+  return {
+    id: song.id,
+    title: song.title,
+    coverUri: song.image_url || "",
+    songUrl: song.song_url,
+    coCreators,
+    artistIds,
+    artists,
+    status: song.status,
+    createdAt: song.created_at,
+  };
 };
 
 export const useCreatorTracks = () => {
@@ -20,9 +46,24 @@ export const useCreatorTracks = () => {
   const loadTracks = useCallback(async () => {
     setLoading(true);
     try {
-      const raw = await AsyncStorage.getItem(CREATOR_TRACKS_KEY);
-      const parsed: CreatorTrack[] = raw ? JSON.parse(raw) : [];
-      setTracks(parsed);
+      // Récupérer l'ID de l'artiste depuis AsyncStorage
+      const artistId = await AsyncStorage.getItem(CREATOR_ARTIST_ID_KEY);
+      
+      if (!artistId) {
+        console.warn("[useCreatorTracks] Aucun artistId trouvé");
+        setTracks([]);
+        return;
+      }
+
+      // Récupérer toutes les chansons de l'artiste depuis Supabase
+      const songs = await getSongsByArtistId(artistId);
+      
+      // Convertir en CreatorTrack
+      const convertedTracks = songs.map(convertSongToTrack);
+      setTracks(convertedTracks);
+    } catch (error: any) {
+      console.error("[useCreatorTracks] Erreur lors du chargement:", error);
+      setTracks([]);
     } finally {
       setLoading(false);
     }
@@ -38,7 +79,7 @@ export const useCreatorTracks = () => {
     (track) => track.status === "validated"
   );
   const pendingTracks = tracks.filter((track) => track.status === "pending");
-  const rejectedTracks = tracks.filter((track) => track.status === "rejected");
+  const rejectedTracks = tracks.filter((track) => track.status === "refused");
 
   return {
     loading,

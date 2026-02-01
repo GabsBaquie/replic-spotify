@@ -23,7 +23,6 @@ export default function Onboarding() {
       const tokenData = await getAccessToken();
       if (tokenData?.accessToken) {
         await AsyncStorage.setItem('spotify_access_token', tokenData.accessToken);
-        console.log('Token Spotify stocké :', tokenData.accessToken);
         router.push('/(tabs)/home');
       }
     };
@@ -82,7 +81,14 @@ export default function Onboarding() {
           title="Sign up free"
           variant="primary"
           textColor="textSecondary"
-          onPress={() => promptAsync()}
+          onPress={async () => {
+            try {
+              await promptAsync();
+            } catch (error: any) {
+              console.error("[Onboarding] Erreur lors de l'ouverture de l'authentification:", error);
+              // L'erreur sera gérée par expo-auth-session
+            }
+          }}
         />
 
         <RestyleButton
@@ -109,7 +115,13 @@ export default function Onboarding() {
         <RestyleButton
           title="Log in"
           variant="transparent"
-          onPress={() => promptAsync()}
+          onPress={async () => {
+            try {
+              await promptAsync();
+            } catch (error: any) {
+              console.error("[Onboarding] Erreur lors de l'ouverture de l'authentification:", error);
+            }
+          }}
         />
       </Box>
     </ParallaxScrollView>

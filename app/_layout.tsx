@@ -1,3 +1,4 @@
+import 'react-native-url-polyfill/auto';
 import { ThemeProvider } from '@shopify/restyle';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';

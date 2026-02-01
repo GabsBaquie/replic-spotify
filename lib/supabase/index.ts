@@ -32,6 +32,8 @@ export {
   createSong,
   getValidatedSongs,
   getPendingSongs,
+  getRefusedSongs,
+  getSongsByArtistId,
   validateSong,
   refuseSong,
 } from "./songs";

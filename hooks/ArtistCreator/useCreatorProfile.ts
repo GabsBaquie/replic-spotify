@@ -55,12 +55,6 @@ export const useCreatorProfile = () => {
           artistId,
           spotifyToken || undefined
         );
-        console.log("[useCreatorProfile] Artist récupéré:", {
-          id: artistData?.id,
-          name: artistData?.name,
-          image_url: artistData?.image_url,
-          status: artistData?.status,
-        });
         setArtist(artistData);
       } catch (err: any) {
         console.error("[useCreatorProfile] Erreur:", err);

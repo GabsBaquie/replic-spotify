@@ -23,6 +23,10 @@ if (supabaseAnonKey.length < 100) {
   console.warn(
     `Premiers caractères de la clé: ${supabaseAnonKey.substring(0, 20)}...`
   );
+} else {
+  console.log(
+    `✅ Clé Supabase chargée (longueur: ${supabaseAnonKey.length}). Premiers caractères: ${supabaseAnonKey.substring(0, 20)}...`
+  );
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
