@@ -1,50 +1,71 @@
-# Welcome to your Expo app 👋
+# Replic Spotify
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Replic Spotify** est une application mobile (React Native / Expo) qui associe l’expérience **Spotify** (API officielle) et un **système de contenu créateur** (Supabase). Les utilisateurs peuvent écouter leur bibliothèque Spotify, rechercher des titres et des artistes (catalogue Spotify + créateurs validés), et les créateurs peuvent publier leurs propres morceaux après validation.
 
-## Get started
+---
 
-1. Install dependencies
+## Fonctionnalités principales
 
-   ```bash
-   npm install
-   ```
+- **Connexion Spotify** (OAuth 2.0) et accès à la bibliothèque (playlists, albums, artistes, titres likés)
+- **Recherche unifiée** : résultats Spotify et créateurs (artistes / titres validés) dans une même liste, triés par pertinence
+- **Lecture** : un seul player à la fois — Spotify ou Supabase ; la barre de lecture en bas de l’écran s’adapte au titre en cours
+- **Espace créateur** : candidature artiste, upload de titres (cover + audio), suivi des statuts (validé / en attente / refusé)
 
-2. Start the app
+---
 
-   ```bash
-    npx expo start
-   ```
+## Documentation
 
-In the output, you'll find options to open the app in a
+| Document | Description |
+|----------|-------------|
+| [**INSTALLATION.md**](./INSTALLATION.md) | Prérequis (Mac / Android), simulateurs, variables d’environnement, lancement du projet |
+| [**GUIDE_UTILISATEUR.md**](./GUIDE_UTILISATEUR.md) | Utilisation de l’app : connexion, recherche, bibliothèque, lecture, espace créateur |
+| [**PRESENTATION.md**](./PRESENTATION.md) | Présentation technique et fonctionnelle du projet |
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Pour tester l’application (enseignants / évaluation)
 
-## Get a fresh project
+Le fichier **`.env`** n’est pas versionné (sécurité : clés API). Il est **transmis séparément** (mail, plateforme, etc.) pour permettre de lancer l’app sans créer de comptes Spotify / Supabase.
 
-When you're ready, run:
+**Étapes :**
+
+1. Cloner le dépôt et installer les dépendances (voir [INSTALLATION.md](./INSTALLATION.md)).
+2. Récupérer le fichier **`.env`** fourni et le placer **à la racine du projet** (à côté de `package.json`).
+3. Installer les outils nécessaires selon la plateforme (Mac : Xcode + simulateur iOS ; Android : Android Studio + émulateur) — détaillé dans [INSTALLATION.md](./INSTALLATION.md).
+4. Lancer l’app : `npx expo start` puis ouvrir sur simulateur / appareil ou Expo Go.
+
+Sans le fichier `.env`, l’application ne pourra pas se connecter à Spotify ni à Supabase.
+
+---
+
+## Démarrage rapide (développeurs)
 
 ```bash
-npm run reset-project
+# Cloner et entrer dans le projet
+git clone <url-du-repo>
+cd replic-spotify
+
+# Installer les dépendances
+npm install
+
+# Placer le fichier .env à la racine (fourni séparément ou créé selon INSTALLATION.md)
+
+# Démarrer Expo
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Ensuite : **i** pour iOS, **a** pour Android, ou scanner le QR code avec Expo Go. Détails et dépannage dans [INSTALLATION.md](./INSTALLATION.md).
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## Stack technique
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- **Frontend** : React Native, Expo SDK 53, Expo Router, TypeScript, TanStack Query, Restyle
+- **Backend / services** : Spotify Web API & Web Playback SDK, Supabase (PostgreSQL, Storage, Edge Functions)
+- **Audio** : Expo AV (titres créateurs), Spotify SDK (titres Spotify)
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## Licence
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Projet à usage pédagogique / évaluation.
