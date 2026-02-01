@@ -13,6 +13,8 @@ import PlayPauseButton from "@/components/ui/PlayPauseButton";
 import { LibraryHero } from "@/components/ui/LibraryHero";
 import { LibraryTrackRow } from "@/components/ui/LibraryTrackRow";
 import { startPlayback } from "@/query/player/startPlayback";
+import useSupabasePlayer from "@/hooks/Player/useSupabasePlayer";
+import type { SongWithArtists } from "@/lib/supabase";
 
 type ActionConfig = {
   label: string;
@@ -35,6 +37,7 @@ const baseActions: ActionConfig[] = [
     label: "View album",
     icon: require("@/assets/images/icons/album.png"),
     handler: (router, track) =>
+      track.album &&
       router.push({
         pathname: "/(tabs)/search/album/[id]",
         params: { id: track.album.id, item: JSON.stringify(track.album) },
@@ -43,18 +46,25 @@ const baseActions: ActionConfig[] = [
   {
     label: "View artist",
     icon: require("@/assets/images/icons/artist.png"),
-    handler: (router, track) =>
-      router.push({
-        pathname: "/home/artist/[id]",
-        params: { id: track.artists[0].id },
-      }),
+    handler: (router, track) => {
+      const artistId = track.artists?.[0]?.id;
+      if (artistId)
+        router.push({
+          pathname: "/(tabs)/library/artist/[id]",
+          params: {
+            id: artistId,
+            source: "supabase",
+            item: JSON.stringify(track.artists[0]),
+          },
+        });
+    },
   },
 ];
 
 export default function TrackScreen() {
-  const { item } = useLocalSearchParams();
+  const { item, source } = useLocalSearchParams<{ item?: string; source?: string }>();
   const router = useRouter();
-  const data = JSON.parse(item as string);
+  const supabasePlayer = useSupabasePlayer();
   const [likeImage, setLikeImage] = useState(
     require("@/assets/images/icons/like_off.png")
   );
@@ -62,36 +72,68 @@ export default function TrackScreen() {
     require("@/assets/images/icons/download_off.png")
   );
 
-  const actions = useMemo(() => baseActions, []);
+  const isSupabase = source === "supabase" && item;
+  const data = item ? JSON.parse(item as string) : null;
+
+  const supabaseTrackInfo = useMemo(() => {
+    if (!isSupabase || !data) return null;
+    const song = data as SongWithArtists;
+    const uri = song.song_url ?? "";
+    return {
+      name: song.title,
+      artists: song.artists?.map((a) => a.name) ?? [],
+      artistIds: song.artists?.map((a) => a.id) ?? [],
+      albumArtUri: song.image_url ?? null,
+      uri,
+    };
+  }, [isSupabase, data]);
 
   useEffect(() => {
-    const autoplay = async () => {
-      try {
-        await startPlayback({ uris: [`spotify:track:${data.id}`] });
-      } catch (error) {
-        console.error("Failed to autoplay track", error);
-      }
-    };
+    if (!data) return;
+    if (isSupabase && supabaseTrackInfo?.uri) {
+      supabasePlayer.play(supabaseTrackInfo).catch((err) =>
+        console.warn("[TrackScreen] Supabase autoplay failed:", err?.message)
+      );
+    } else if (!isSupabase && data.id) {
+      startPlayback({ uris: [`spotify:track:${data.id}`] }).catch((err) =>
+        console.warn("Failed to autoplay track", err)
+      );
+    }
+  }, [isSupabase, data?.id, supabaseTrackInfo?.uri]);
 
-    autoplay();
-  }, [data.id]);
+  const actions = useMemo(() => baseActions, []);
+
+  if (!data) {
+    return null;
+  }
+
+  const coverUri = isSupabase
+    ? (data as SongWithArtists).image_url
+    : (data as any).album?.images?.[0]?.url;
+  const title = isSupabase ? (data as SongWithArtists).title : (data as any).name;
+  const subtitle = isSupabase
+    ? (data as SongWithArtists).artists?.[0]?.name
+    : (data as any).artists?.[0]?.name;
+  const metadata = isSupabase
+    ? ["Créateur"]
+    : [
+        "Single",
+        (data as any).album?.release_date?.split("-")[0],
+        (data as any).album?.name,
+      ].filter(Boolean);
 
   return (
     <Box style={styles.container}>
       <LibraryHero
         cover={
           <Image
-            source={{ uri: data.album.images[0]?.url }}
+            source={{ uri: coverUri ?? "https://via.placeholder.com/300" }}
             style={styles.heroCover}
           />
         }
-        title={data.name}
-        subtitle={data.artists[0]?.name}
-        metadata={[
-          "Single",
-          data.album.release_date.split("-")[0],
-          data.album.name,
-        ]}
+        title={title}
+        subtitle={subtitle}
+        metadata={metadata}
         actions={
           <>
             <TouchableOpacity
@@ -133,7 +175,26 @@ export default function TrackScreen() {
             </TouchableOpacity>
           </>
         }
-        rightSlot={<PlayPauseButton />}
+        rightSlot={
+          isSupabase ? (
+            <TouchableOpacity
+              style={styles.playButton}
+              onPress={() => supabasePlayer.togglePlayPause()}
+            >
+              <Image
+                source={
+                  supabasePlayer.state?.isPaused !== false
+                    ? require("@/assets/images/icons/play.png")
+                    : require("@/assets/images/icons/pause.png")
+                }
+                style={styles.playButtonIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          ) : (
+            <PlayPauseButton />
+          )
+        }
       />
 
       <Text style={styles.sectionTitle}>Actions</Text>
@@ -174,6 +235,18 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   actionIcon: {
+    width: 20,
+    height: 20,
+  },
+  playButton: {
+    backgroundColor: "#1DB954",
+    padding: 20,
+    borderRadius: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playButtonIcon: {
     width: 20,
     height: 20,
   },
