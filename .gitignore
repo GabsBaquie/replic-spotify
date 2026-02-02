@@ -62,3 +62,8 @@ logs/
 
 # Projet exemple (reset-project)
 app-example
+
+
+coverage/
+jest-coverage/
+__coverage__/
