@@ -15,11 +15,11 @@
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [**INSTALLATION.md**](./INSTALLATION.md) | Prérequis (Mac / Android), simulateurs, variables d’environnement, lancement du projet |
-| [**GUIDE_UTILISATEUR.md**](./GUIDE_UTILISATEUR.md) | Utilisation de l’app : connexion, recherche, bibliothèque, lecture, espace créateur |
-| [**PRESENTATION.md**](./PRESENTATION.md) | Présentation technique et fonctionnelle du projet |
+| Document                                           | Description                                                                            |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [**INSTALLATION.md**](./INSTALLATION.md)           | Prérequis (Mac / Android), simulateurs, variables d’environnement, lancement du projet |
+| [**GUIDE_UTILISATEUR.md**](./GUIDE_UTILISATEUR.md) | Utilisation de l’app : connexion, recherche, bibliothèque, lecture, espace créateur    |
+| [**PRESENTATION.md**](./PRESENTATION.md)           | Présentation technique et fonctionnelle du projet                                      |
 
 ---
 
@@ -55,6 +55,18 @@ npx expo start
 ```
 
 Ensuite : **i** pour iOS, **a** pour Android, ou scanner le QR code avec Expo Go. Détails et dépannage dans [INSTALLATION.md](./INSTALLATION.md).
+
+### Test unitaires
+
+Pour lancer les tests unitaires lancer la commande suivante :
+
+```bash
+npm run test
+
+npm run test:coverage #Affiche le rapport de couverture
+```
+
+_Les tests unitaires se trouve dans /hooks/ArtistCreator/\_\_tests\_\_/ et dans /lib/supabase/\_\_test\_\_/_
 
 ---
 

@@ -11,7 +11,7 @@ Ce guide décrit comment utiliser l’application Replic Spotify au quotidien : 
 1. Ouvre l’application Replic Spotify.
 2. Tu arrives sur l’**onboarding** (écran d’accueil / connexion).
 3. Appuie sur le bouton pour **te connecter avec Spotify**.
-4. Une page web (ou une fenêtre) s’ouvre pour te demander d’autoriser l’app à accéder à ton compte Spotify.
+4. Une page web (ou une fenêtre) s’ouvre pour te demander d’autoriser l’app à accéder à ton compte Spotify (Il faudras un compte Spotify Premium pour pouvoir utiliser les fonctionnalité de l'application).
 5. Accepte les autorisations, puis tu es redirigé vers l’app. Tu es alors connecté.
 
 Tu accèdes ensuite à l’écran d’accueil (Home) avec les onglets en bas.
@@ -173,15 +173,15 @@ Depuis l’écran **Profil** (ou paramètres, selon l’app) :
 
 ## 10. Résumé des fonctionnalités
 
-| Fonctionnalité              | Description                                      |
-|----------------------------|--------------------------------------------------|
-| Connexion Spotify          | OAuth depuis l’app, session conservée           |
-| Recherche                  | Mélange Spotify + créateurs, tri par pertinence  |
-| Lecture Spotify            | Via le player Spotify (Web Playback SDK)        |
-| Lecture créateurs          | Via le player intégré ; barre du bas à jour     |
-| Une seule lecture          | Spotify ou créateur, jamais les deux en parallèle|
-| Bibliothèque               | Playlists, albums, artistes, titres likés       |
-| Espace créateur            | Candidature artiste, upload de titres, statuts  |
-| Barre de lecture           | Titre en cours, play/pause, progression          |
+| Fonctionnalité    | Description                                       |
+| ----------------- | ------------------------------------------------- |
+| Connexion Spotify | OAuth depuis l’app, session conservée             |
+| Recherche         | Mélange Spotify + créateurs, tri par pertinence   |
+| Lecture Spotify   | Via le player Spotify (Web Playback SDK)          |
+| Lecture créateurs | Via le player intégré ; barre du bas à jour       |
+| Une seule lecture | Spotify ou créateur, jamais les deux en parallèle |
+| Bibliothèque      | Playlists, albums, artistes, titres likés         |
+| Espace créateur   | Candidature artiste, upload de titres, statuts    |
+| Barre de lecture  | Titre en cours, play/pause, progression           |
 
 Pour l’installation et la configuration du projet, voir **INSTALLATION.md**.
