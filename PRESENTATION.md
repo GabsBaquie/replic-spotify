@@ -288,6 +288,8 @@ Le diagramme de contexte système montre l'application Replic Spotify et ses int
 
 ![Contexte Système](/diagrammes/C4/Contexte%20Système.png)
 
+> 📄 **Référence** : Voir le fichier [`SYSTEM_CONTEXT_DIAGRAM.md`](/SYSTEM_CONTEXT_DIAGRAM.md) pour une explication détaillée.
+
 #### Niveau 2 : Conteneurs
 
 L'application se compose de plusieurs conteneurs :

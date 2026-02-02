@@ -25,7 +25,7 @@
 
 ## Pour tester l’application (enseignants / évaluation)
 
-Le fichier **`.env`** n’est pas versionné (sécurité : clés API). Il est **transmis séparément** (mail, plateforme, etc.) pour permettre de lancer l’app sans créer de comptes Spotify / Supabase.
+Le fichier **`.env`** n’est pas versionné (sécurité : clés API). Il est **transmis séparément** (mail, plateforme, etc.) pour permettre de lancer l’app sans créer de comptes Spotify API / Supabase.
 
 **Étapes :**
 
